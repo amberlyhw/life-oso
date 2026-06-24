@@ -867,20 +867,21 @@ function toggleUnit(pid, i) {
 
 function toggleMultiUnit(pid, ci, ui) {
   const p = S.projects.find(x=>x.id===pid);
-  if (p && p.courses && p.courses[ci] && p.courses[ci].units) {
-    p.courses[ci].units[ui].done = !p.courses[ci].units[ui].done;
-    save();
-    // 只更新進度數字，不重新渲染（避免折疊列表跳回去）
-    const allUnits = p.courses.flatMap(c=>c.units||[]);
-    const allDone  = allUnits.filter(u=>u.done).length;
-    const allPct   = allUnits.length ? Math.round(allDone/allUnits.length*100) : 0;
-    const c = p.courses[ci]; const units = c.units||[];
-    const done = units.filter(u=>u.done).length;
-    const pct  = units.length ? Math.round(done/units.length*100) : 0;
-    // update overall bar (if element exists)
-    const bar = document.querySelector('#page-projects .bg-stone-700');
-    if (bar) bar.style.width = allPct + '%';
-  }
+  if (!p || !p.courses || !p.courses[ci]) return;
+  p.courses[ci].units[ui].done = !p.courses[ci].units[ui].done;
+  save();
+  // 記住哪些課程展開中，重新渲染後還原
+  const open = p.courses.map((_,i) => {
+    const el = document.getElementById(`cr-${pid}-${i}`);
+    return el && !el.classList.contains('hidden');
+  });
+  renderProjectsPage(pid);
+  open.forEach((isOpen, i) => {
+    if (isOpen) {
+      const el = document.getElementById(`cr-${pid}-${i}`);
+      if (el) el.classList.remove('hidden');
+    }
+  });
 }
 
 function showAddUnit(pid) {

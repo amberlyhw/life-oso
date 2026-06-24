@@ -346,7 +346,7 @@ function renderHabits() {
         <div class="flex gap-2 pt-1">
           <input type="text" id="di-${h.id}" placeholder="${h.placeholder||'新增'}"
             class="flex-1 text-sm px-3 py-1.5 bg-stone-50 rounded-lg border border-stone-100 focus:outline-none focus:border-stone-300"
-            onkeydown="if(event.key==='Enter')addTextDetail('${h.id}')">
+            onkeydown="if(event.key==='Enter'&&!event.isComposing)addTextDetail('${h.id}')">
           <button onclick="addTextDetail('${h.id}')" class="text-xs px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg font-medium text-stone-600 shrink-0">+</button>
         </div>
       </div>`;
@@ -362,7 +362,7 @@ function renderHabits() {
         </div>
         <span class="text-base">${h.emoji}</span>
         <span class="text-sm font-medium ${done?'text-stone-400 line-through':'text-stone-700'}">${h.name}</span>
-        <span class="ml-auto text-xs text-amber-400 font-medium shrink-0">+${h.coins}</span>
+        <span class="ml-auto text-xs text-amber-400 font-medium shrink-0">+${h.coins}${h.type==='choice'?' /項':''}</span>
       </button>
       ${expandHtml}
     </div>`;
@@ -379,15 +379,25 @@ function toggleHabit(id) {
   if (!log.habits[id].done) {
     log.habits[id].done = true;
     log.habits[id].details = [];
-    log.habits[id].earned = h.coins;
-    S.coins += h.coins;
-    S.coinLog.unshift({date: t, amount: h.coins, note: `${h.emoji} ${h.name}`});
+    if (h.type === 'choice') {
+      log.habits[id].earned = 0; // coins earned per option in toggleDetailChoice
+    } else {
+      log.habits[id].earned = h.coins;
+      S.coins += h.coins;
+      S.coinLog.unshift({date: t, amount: h.coins, note: `${h.emoji} ${h.name}`});
+    }
   } else {
     const earned = log.habits[id].earned || 0;
     S.coins = Math.max(0, S.coins - earned);
-    S.coinLog = S.coinLog.filter((l,i) =>
-      !(i === S.coinLog.findIndex(x => x.date===t && x.note.includes(h.name)))
-    );
+    if (h.type === 'choice') {
+      getDetails(log.habits[id]).forEach(opt => {
+        const i = S.coinLog.findIndex(x => x.date===t && x.note.includes(opt));
+        if (i !== -1) S.coinLog.splice(i, 1);
+      });
+    } else {
+      const i = S.coinLog.findIndex(x => x.date===t && x.note.includes(h.name));
+      if (i !== -1) S.coinLog.splice(i, 1);
+    }
     log.habits[id].done = false;
     log.habits[id].earned = 0;
     log.habits[id].details = [];
@@ -401,14 +411,31 @@ function toggleHabit(id) {
 }
 
 function toggleDetailChoice(id, option) {
-  const log = getDayLog(todayStr());
+  const t = todayStr();
+  const log = getDayLog(t);
   if (!log.habits[id]) log.habits[id] = {done:true, details:[], earned:0};
-  const details = getDetails(log.habits[id]);
+  const h = S.habits.find(x => x.id === id);
+  const hlog = log.habits[id];
+  const details = getDetails(hlog);
   const idx = details.indexOf(option);
-  if (idx === -1) details.push(option);
-  else details.splice(idx, 1);
-  log.habits[id].details = details;
+
+  if (idx === -1) {
+    details.push(option);
+    hlog.earned = (hlog.earned||0) + h.coins;
+    S.coins += h.coins;
+    S.coinLog.unshift({date: t, amount: h.coins, note: `${h.emoji} ${h.name}・${option}`});
+  } else {
+    details.splice(idx, 1);
+    hlog.earned = Math.max(0, (hlog.earned||0) - h.coins);
+    S.coins = Math.max(0, S.coins - h.coins);
+    const i = S.coinLog.findIndex(x => x.date===t && x.note.includes(option));
+    if (i !== -1) S.coinLog.splice(i, 1);
+    if (details.length === 0) hlog.done = false;
+  }
+
+  hlog.details = details;
   save(); renderHabits();
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
 }
 
 function addTextDetail(id) {
@@ -617,13 +644,16 @@ function renderStudy(p, el) {
       ${others.map(w => {
         const done = w.days && w.days.every(d=>d.done);
         return `<div class="border border-stone-100 rounded-xl overflow-hidden">
-          <button class="w-full flex items-center justify-between px-4 py-3 text-left" onclick="document.getElementById('wk-${p.id}-${w.num}').classList.toggle('hidden')">
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-medium text-stone-600">W${w.num}</span>
-              ${w.theme?`<span class="text-xs text-stone-400">${w.theme}</span>`:''}
-            </div>
-            <span class="text-xs ${done?'text-green-500':'text-stone-300'}">${done?'✓':'▼'}</span>
-          </button>
+          <div class="flex items-center">
+            <button class="flex-1 flex items-center justify-between px-4 py-3 text-left" onclick="document.getElementById('wk-${p.id}-${w.num}').classList.toggle('hidden')">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-stone-600">W${w.num}</span>
+                ${w.theme?`<span class="text-xs text-stone-400">${w.theme}</span>`:''}
+              </div>
+              <span class="text-xs ${done?'text-green-500':'text-stone-300'}">${done?'✓':'▼'}</span>
+            </button>
+            <button onclick="deleteWeek('${p.id}',${w.num})" class="pr-3 text-stone-200 hover:text-red-400 text-xs">✕</button>
+          </div>
           <div id="wk-${p.id}-${w.num}" class="hidden px-4 pb-3">
             ${(w.days||[]).map((d,di) => `
               <label class="flex items-center gap-3 py-1.5 cursor-pointer">
@@ -645,6 +675,12 @@ function calcCurrentWeek(p) {
   if (!p.startDate) return 1;
   const diff = Math.floor((new Date() - new Date(p.startDate + 'T12:00:00')) / (7*24*60*60*1000)) + 1;
   return Math.max(1, Math.min(diff, p.totalWeeks||30));
+}
+
+function deleteWeek(pid, num) {
+  if (!confirm(`刪除 W${num}？`)) return;
+  const p = S.projects.find(x=>x.id===pid);
+  if (p && p.weeks) { p.weeks = p.weeks.filter(w=>w.num!==num); save(); renderProjectsPage(pid); }
 }
 
 function toggleDay(pid, wnum, di) {
@@ -924,22 +960,32 @@ function renderCollectionsPage(id) {
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead><tr class="text-xs text-stone-300 border-b border-stone-100">
-          <th class="text-left py-2 pr-4 font-medium">名稱</th>
-          <th class="text-left py-2 pr-4 font-medium whitespace-nowrap">日期</th>
+          <th class="text-left py-2 pr-3 font-medium">名稱</th>
+          <th class="text-left py-2 pr-3 font-medium">狀態</th>
+          <th class="text-left py-2 pr-3 font-medium whitespace-nowrap">日期</th>
           <th class="text-left py-2 font-medium">備註</th>
           <th class="py-2 w-6"></th>
         </tr></thead>
         <tbody>
-          ${items.map((item,i)=>`
-            <tr class="border-b border-stone-50 hover:bg-stone-50 group">
-              <td class="py-3 pr-4 font-medium text-stone-700">${item.name}</td>
-              <td class="py-3 pr-4 text-xs text-stone-400 whitespace-nowrap">${item.date||'—'}</td>
+          ${items.map((item,i)=>{
+            const statusColor = item.status==='計畫中' ? 'text-amber-500' : item.status==='完成' ? 'text-green-500' : 'text-stone-300';
+            return `<tr class="border-b border-stone-50 hover:bg-stone-50 group">
+              <td class="py-3 pr-3 font-medium text-stone-700">${item.name}</td>
+              <td class="py-3 pr-3">
+                <select onchange="updateColStatus('${id}',${i},this.value)"
+                  class="text-xs ${statusColor} bg-transparent border-0 outline-none cursor-pointer">
+                  <option value="" ${!item.status?'selected':''}>—</option>
+                  <option value="計畫中" ${item.status==='計畫中'?'selected':''}>計畫中</option>
+                  <option value="完成" ${item.status==='完成'?'selected':''}>完成</option>
+                </select>
+              </td>
+              <td class="py-3 pr-3 text-xs text-stone-400 whitespace-nowrap">${item.date||'—'}</td>
               <td class="py-3 text-xs text-stone-400">${item.note||'—'}</td>
               <td class="py-3">
                 <button onclick="deleteColItem('${id}',${i})"
                   class="text-stone-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">✕</button>
               </td>
-            </tr>`).join('')}
+            </tr>`;}).join('')}
         </tbody>
       </table>
     </div>`;
@@ -950,6 +996,11 @@ function showAddColItem(catId) {
     <div class="space-y-3">
       <input id="cn" type="text" placeholder="名稱"
         class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <select id="cstatus" class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none text-stone-500">
+        <option value="">狀態（選填）</option>
+        <option value="計畫中">計畫中</option>
+        <option value="完成">完成</option>
+      </select>
       <input id="cd" type="date" value="${todayStr()}"
         class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
       <input id="cnote" type="text" placeholder="備註（選填）"
@@ -965,8 +1016,12 @@ function addColItem(catId) {
   const name = document.getElementById('cn').value.trim();
   if (!name) return;
   if (!S.colData[catId]) S.colData[catId] = [];
-  S.colData[catId].unshift({name, date:document.getElementById('cd').value, note:document.getElementById('cnote').value.trim()});
+  S.colData[catId].unshift({name, status:document.getElementById('cstatus').value, date:document.getElementById('cd').value, note:document.getElementById('cnote').value.trim()});
   save(); closeModal(); renderCollectionsPage(catId);
+}
+
+function updateColStatus(catId, i, status) {
+  if (S.colData[catId]) { S.colData[catId][i].status = status; save(); }
 }
 
 function deleteColItem(catId, i) {

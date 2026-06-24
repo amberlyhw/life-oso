@@ -379,24 +379,24 @@ function toggleHabit(id) {
   if (!log.habits[id].done) {
     log.habits[id].done = true;
     log.habits[id].details = [];
-    if (h.type === 'choice') {
-      log.habits[id].earned = 0; // coins earned per option in toggleDetailChoice
-    } else {
+    if (h.type === 'none') {
       log.habits[id].earned = h.coins;
       S.coins += h.coins;
       S.coinLog.unshift({date: t, amount: h.coins, note: `${h.emoji} ${h.name}`});
+    } else {
+      log.habits[id].earned = 0; // coins earned per entry (choice/text)
     }
   } else {
     const earned = log.habits[id].earned || 0;
     S.coins = Math.max(0, S.coins - earned);
-    if (h.type === 'choice') {
-      getDetails(log.habits[id]).forEach(opt => {
-        const i = S.coinLog.findIndex(x => x.date===t && x.note.includes(opt));
-        if (i !== -1) S.coinLog.splice(i, 1);
-      });
-    } else {
+    if (h.type === 'none') {
       const i = S.coinLog.findIndex(x => x.date===t && x.note.includes(h.name));
       if (i !== -1) S.coinLog.splice(i, 1);
+    } else {
+      getDetails(log.habits[id]).forEach(entry => {
+        const i = S.coinLog.findIndex(x => x.date===t && x.note.includes(entry));
+        if (i !== -1) S.coinLog.splice(i, 1);
+      });
     }
     log.habits[id].done = false;
     log.habits[id].earned = 0;
@@ -442,20 +442,40 @@ function addTextDetail(id) {
   const inp = document.getElementById('di-' + id);
   const val = inp ? inp.value.trim() : '';
   if (!val) return;
-  const log = getDayLog(todayStr());
+  const t = todayStr();
+  const log = getDayLog(t);
   if (!log.habits[id]) log.habits[id] = {done:true, details:[], earned:0};
+  const h = S.habits.find(x => x.id === id);
   const details = getDetails(log.habits[id]);
   details.push(val);
   log.habits[id].details = details;
+  if (h) {
+    log.habits[id].earned = (log.habits[id].earned||0) + h.coins;
+    S.coins += h.coins;
+    S.coinLog.unshift({date: t, amount: h.coins, note: `${h.emoji} ${h.name}・${val}`});
+  }
   save(); renderHabits();
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
 }
 
 function removeDetail(id, idx) {
-  const log = getDayLog(todayStr());
-  const details = getDetails(log.habits[id] || {});
+  const t = todayStr();
+  const log = getDayLog(t);
+  const hlog = log.habits[id] || {};
+  const details = getDetails(hlog);
+  const val = details[idx];
+  const h = S.habits.find(x => x.id === id);
   details.splice(idx, 1);
-  log.habits[id].details = details;
+  hlog.details = details;
+  if (h && val) {
+    hlog.earned = Math.max(0, (hlog.earned||0) - h.coins);
+    S.coins = Math.max(0, S.coins - h.coins);
+    const i = S.coinLog.findIndex(x => x.date===t && x.note.includes(val));
+    if (i !== -1) S.coinLog.splice(i, 1);
+    if (details.length === 0) hlog.done = false;
+  }
   save(); renderHabits();
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
 }
 
 document.getElementById('diary-input').addEventListener('input', function() {
@@ -578,13 +598,16 @@ function renderProjectsPage(id) {
         </div>
         <div class="space-y-3">
           ${S.projects.map(p => `
-            <div onclick="nav('projects','${p.id}')" class="border border-stone-100 rounded-xl p-4 cursor-pointer hover:bg-stone-50 flex items-center gap-3">
-              <span class="text-2xl">${p.emoji||'📋'}</span>
-              <div>
-                <div class="font-medium text-sm">${p.name}</div>
-                <div class="text-xs text-stone-400">${p.template}</div>
+            <div class="border border-stone-100 rounded-xl p-4 flex items-center gap-3 hover:bg-stone-50 group">
+              <div class="flex-1 flex items-center gap-3 cursor-pointer" onclick="nav('projects','${p.id}')">
+                <span class="text-2xl">${p.emoji||'📋'}</span>
+                <div>
+                  <div class="font-medium text-sm">${p.name}</div>
+                  <div class="text-xs text-stone-400">${p.template}</div>
+                </div>
               </div>
-              <span class="ml-auto text-stone-300 text-sm">→</span>
+              <button onclick="deleteProject('${p.id}')" class="text-stone-200 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity">刪除</button>
+              <span class="text-stone-300 text-sm cursor-pointer" onclick="nav('projects','${p.id}')">→</span>
             </div>`).join('')}
         </div>`;
     return;
@@ -631,10 +654,14 @@ function renderStudy(p, el) {
       </div>
       <div class="px-4 py-2">
         ${(cw.days||[]).map((d,di) => `
-          <label class="flex items-center gap-3 py-2 cursor-pointer border-b border-stone-50 last:border-0">
+          <div class="flex items-center gap-3 py-2 border-b border-stone-50 last:border-0">
             <input type="checkbox" ${d.done?'checked':''} onchange="toggleDay('${p.id}',${cw.num},${di})">
-            <span class="text-sm ${d.done?'text-stone-400 line-through':'text-stone-700'}">${d.label}</span>
-          </label>`).join('')}
+            <span contenteditable="true"
+              onblur="updateDayLabel('${p.id}',${cw.num},${di},this)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+              class="text-sm flex-1 outline-none rounded px-1 -mx-1 hover:bg-stone-100 focus:bg-stone-100 ${d.done?'text-stone-400 line-through':'text-stone-700'}"
+            >${d.label}</span>
+          </div>`).join('')}
       </div>
     </div>` : ''}
 
@@ -644,22 +671,23 @@ function renderStudy(p, el) {
       ${others.map(w => {
         const done = w.days && w.days.every(d=>d.done);
         return `<div class="border border-stone-100 rounded-xl overflow-hidden">
-          <div class="flex items-center">
-            <button class="flex-1 flex items-center justify-between px-4 py-3 text-left" onclick="document.getElementById('wk-${p.id}-${w.num}').classList.toggle('hidden')">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-medium text-stone-600">W${w.num}</span>
-                ${w.theme?`<span class="text-xs text-stone-400">${w.theme}</span>`:''}
-              </div>
-              <span class="text-xs ${done?'text-green-500':'text-stone-300'}">${done?'✓':'▼'}</span>
-            </button>
-            <button onclick="deleteWeek('${p.id}',${w.num})" class="pr-3 text-stone-200 hover:text-red-400 text-xs">✕</button>
-          </div>
+          <button class="w-full flex items-center justify-between px-4 py-3 text-left" onclick="document.getElementById('wk-${p.id}-${w.num}').classList.toggle('hidden')">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-stone-600">W${w.num}</span>
+              ${w.theme?`<span class="text-xs text-stone-400">${w.theme}</span>`:''}
+            </div>
+            <span class="text-xs ${done?'text-green-500':'text-stone-300'}">${done?'✓':'▼'}</span>
+          </button>
           <div id="wk-${p.id}-${w.num}" class="hidden px-4 pb-3">
             ${(w.days||[]).map((d,di) => `
-              <label class="flex items-center gap-3 py-1.5 cursor-pointer">
+              <div class="flex items-center gap-3 py-1.5 border-b border-stone-50 last:border-0">
                 <input type="checkbox" ${d.done?'checked':''} onchange="toggleDay('${p.id}',${w.num},${di})">
-                <span class="text-sm ${d.done?'text-stone-400 line-through':'text-stone-600'}">${d.label}</span>
-              </label>`).join('')}
+                <span contenteditable="true"
+                  onblur="updateDayLabel('${p.id}',${w.num},${di},this)"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                  class="text-sm flex-1 outline-none rounded px-1 -mx-1 hover:bg-stone-50 focus:bg-stone-50 ${d.done?'text-stone-400 line-through':'text-stone-600'}"
+                >${d.label}</span>
+              </div>`).join('')}
           </div>
         </div>`;
       }).join('')}
@@ -677,10 +705,17 @@ function calcCurrentWeek(p) {
   return Math.max(1, Math.min(diff, p.totalWeeks||30));
 }
 
-function deleteWeek(pid, num) {
-  if (!confirm(`刪除 W${num}？`)) return;
+function updateDayLabel(pid, wnum, di, el) {
   const p = S.projects.find(x=>x.id===pid);
-  if (p && p.weeks) { p.weeks = p.weeks.filter(w=>w.num!==num); save(); renderProjectsPage(pid); }
+  const w = p && p.weeks && p.weeks.find(x=>x.num===wnum);
+  if (w && w.days && w.days[di]) { w.days[di].label = el.textContent.trim(); save(); }
+}
+
+function deleteProject(pid) {
+  const p = S.projects.find(x=>x.id===pid);
+  if (!p || !confirm(`刪除專案「${p.name}」？此動作無法復原。`)) return;
+  S.projects = S.projects.filter(x=>x.id!==pid);
+  save(); renderSbProjects(); nav('projects');
 }
 
 function toggleDay(pid, wnum, di) {

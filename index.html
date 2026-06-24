@@ -312,29 +312,43 @@ function renderToday() {
   renderHabits();
 }
 
+function getDetails(hlog) {
+  if (Array.isArray(hlog.details)) return hlog.details;
+  if (hlog.detail) return [hlog.detail];
+  return [];
+}
+
 function renderHabits() {
   const t = todayStr();
   const log = getDayLog(t);
   document.getElementById('habits-list').innerHTML = S.habits.map(h => {
     const hlog = log.habits[h.id] || {};
     const done = hlog.done || false;
-    const detail = hlog.detail || '';
+    const details = getDetails(hlog);
 
     let expandHtml = '';
     if (done && h.type === 'choice') {
       expandHtml = `<div class="flex flex-wrap gap-2 px-4 pb-3">
         ${h.options.map(o => `
-          <button onclick="setDetail('${h.id}','${o}')"
+          <button onclick="toggleDetailChoice('${h.id}','${o}')"
             class="px-3 py-1 rounded-full text-xs font-medium border transition-colors
-            ${detail===o ? 'bg-stone-800 text-white border-stone-800' : 'border-stone-200 text-stone-400 hover:border-stone-400'}">
+            ${details.includes(o) ? 'bg-stone-800 text-white border-stone-800' : 'border-stone-200 text-stone-400 hover:border-stone-400'}">
             ${o}
           </button>`).join('')}
       </div>`;
     } else if (done && h.type === 'text') {
-      expandHtml = `<div class="px-4 pb-3">
-        <input type="text" value="${detail.replace(/"/g,'&quot;')}" placeholder="${h.placeholder||''}"
-          oninput="setDetail('${h.id}',this.value)"
-          class="w-full text-sm px-3 py-2 bg-stone-50 rounded-lg border border-stone-100 focus:outline-none focus:border-stone-300">
+      expandHtml = `<div class="px-4 pb-3 space-y-2">
+        ${details.map((d,di) => `
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-stone-600 flex-1">${d}</span>
+            <button onclick="removeDetail('${h.id}',${di})" class="text-stone-300 hover:text-red-400 text-xs shrink-0">✕</button>
+          </div>`).join('')}
+        <div class="flex gap-2 pt-1">
+          <input type="text" id="di-${h.id}" placeholder="${h.placeholder||'新增'}"
+            class="flex-1 text-sm px-3 py-1.5 bg-stone-50 rounded-lg border border-stone-100 focus:outline-none focus:border-stone-300"
+            onkeydown="if(event.key==='Enter')addTextDetail('${h.id}')">
+          <button onclick="addTextDetail('${h.id}')" class="text-xs px-3 py-1.5 bg-stone-100 hover:bg-stone-200 rounded-lg font-medium text-stone-600 shrink-0">+</button>
+        </div>
       </div>`;
     }
 
@@ -358,12 +372,13 @@ function renderHabits() {
 function toggleHabit(id) {
   const t = todayStr();
   const log = getDayLog(t);
-  if (!log.habits[id]) log.habits[id] = {done:false, detail:'', earned:0};
+  if (!log.habits[id]) log.habits[id] = {done:false, details:[], earned:0};
   const h = S.habits.find(x => x.id === id);
   if (!h) return;
 
   if (!log.habits[id].done) {
     log.habits[id].done = true;
+    log.habits[id].details = [];
     log.habits[id].earned = h.coins;
     S.coins += h.coins;
     S.coinLog.unshift({date: t, amount: h.coins, note: `${h.emoji} ${h.name}`});
@@ -375,7 +390,7 @@ function toggleHabit(id) {
     );
     log.habits[id].done = false;
     log.habits[id].earned = 0;
-    log.habits[id].detail = '';
+    log.habits[id].details = [];
   }
   save();
   renderHabits();
@@ -385,12 +400,35 @@ function toggleHabit(id) {
   document.getElementById('today-rate').textContent = `本月 ${calcMonthRate()}%`;
 }
 
-function setDetail(id, val) {
+function toggleDetailChoice(id, option) {
   const log = getDayLog(todayStr());
-  if (!log.habits[id]) log.habits[id] = {done:true, detail:'', earned:0};
-  log.habits[id].detail = val;
-  save();
-  renderHabits();
+  if (!log.habits[id]) log.habits[id] = {done:true, details:[], earned:0};
+  const details = getDetails(log.habits[id]);
+  const idx = details.indexOf(option);
+  if (idx === -1) details.push(option);
+  else details.splice(idx, 1);
+  log.habits[id].details = details;
+  save(); renderHabits();
+}
+
+function addTextDetail(id) {
+  const inp = document.getElementById('di-' + id);
+  const val = inp ? inp.value.trim() : '';
+  if (!val) return;
+  const log = getDayLog(todayStr());
+  if (!log.habits[id]) log.habits[id] = {done:true, details:[], earned:0};
+  const details = getDetails(log.habits[id]);
+  details.push(val);
+  log.habits[id].details = details;
+  save(); renderHabits();
+}
+
+function removeDetail(id, idx) {
+  const log = getDayLog(todayStr());
+  const details = getDetails(log.habits[id] || {});
+  details.splice(idx, 1);
+  log.habits[id].details = details;
+  save(); renderHabits();
 }
 
 document.getElementById('diary-input').addEventListener('input', function() {

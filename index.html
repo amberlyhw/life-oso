@@ -830,7 +830,13 @@ function renderWriting(p, el) {
                   ${['草稿','修改中','完成','擱置'].map(s=>`<option ${w.status===s?'selected':''}>${s}</option>`).join('')}
                 </select>
               </td>
-              <td class="py-3 text-xs text-stone-400">${w.note||'—'}</td>
+              <td class="py-3 text-xs text-stone-400">
+                <span contenteditable="true"
+                  onblur="updateWorkNote('${p.id}',${i},this)"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                  class="outline-none rounded px-1 -mx-1 hover:bg-stone-50 focus:bg-stone-50 min-w-[4rem] inline-block"
+                >${w.note||''}</span>
+              </td>
             </tr>`).join('')}
         </tbody>
       </table>
@@ -861,6 +867,11 @@ function addWork(pid) {
   if (!p.works) p.works = [];
   p.works.push({title, status:document.getElementById('wstatus').value, note:document.getElementById('wnote').value.trim()});
   save(); closeModal(); renderProjectsPage(pid);
+}
+
+function updateWorkNote(pid, i, el) {
+  const p = S.projects.find(x=>x.id===pid);
+  if (p && p.works) { p.works[i].note = el.textContent.trim(); save(); }
 }
 
 function updateWorkStatus(pid, i, status) {
@@ -1015,7 +1026,13 @@ function renderCollectionsPage(id) {
                 </select>
               </td>
               <td class="py-3 pr-3 text-xs text-stone-400 whitespace-nowrap">${item.date||'—'}</td>
-              <td class="py-3 text-xs text-stone-400">${item.note||'—'}</td>
+              <td class="py-3 text-xs text-stone-400">
+                <span contenteditable="true"
+                  onblur="updateColNote('${id}',${i},this)"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+                  class="outline-none rounded px-1 -mx-1 hover:bg-stone-50 focus:bg-stone-50 min-w-[4rem] inline-block"
+                >${item.note||''}</span>
+              </td>
               <td class="py-3">
                 <button onclick="deleteColItem('${id}',${i})"
                   class="text-stone-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">✕</button>
@@ -1053,6 +1070,10 @@ function addColItem(catId) {
   if (!S.colData[catId]) S.colData[catId] = [];
   S.colData[catId].unshift({name, status:document.getElementById('cstatus').value, date:document.getElementById('cd').value, note:document.getElementById('cnote').value.trim()});
   save(); closeModal(); renderCollectionsPage(catId);
+}
+
+function updateColNote(catId, i, el) {
+  if (S.colData[catId]) { S.colData[catId][i].note = el.textContent.trim(); save(); }
 }
 
 function updateColStatus(catId, i, status) {

@@ -780,6 +780,58 @@ function addWeek(pid, num) {
 
 // 課程型
 function renderCourse(p, el) {
+  // 多課程模式
+  if (p.courses && p.courses.length) {
+    const allUnits = p.courses.flatMap(c => c.units||[]);
+    const allDone  = allUnits.filter(u=>u.done).length;
+    const allPct   = allUnits.length ? Math.round(allDone/allUnits.length*100) : 0;
+
+    el.innerHTML = `
+      <div class="flex items-center mb-1">${backBtn()}<h1 class="text-xl font-bold">${p.emoji||'🖥️'} ${p.name}</h1></div>
+      <div class="mb-5 ml-1">
+        <div class="flex justify-between text-xs text-stone-400 mb-1.5">
+          <span>共 ${allDone}/${allUnits.length} 單元</span><span>${allPct}%</span>
+        </div>
+        <div class="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden">
+          <div class="bg-stone-700 h-full rounded-full" style="width:${allPct}%"></div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        ${p.courses.map((c,ci) => {
+          const units = c.units||[];
+          const done  = units.filter(u=>u.done).length;
+          const pct   = units.length ? Math.round(done/units.length*100) : 0;
+          return `<div class="border border-stone-100 rounded-xl overflow-hidden">
+            <button class="w-full flex items-center justify-between px-4 py-3 text-left"
+              onclick="document.getElementById('cr-${p.id}-${ci}').classList.toggle('hidden')">
+              <div>
+                <div class="text-sm font-medium">${c.name}</div>
+                <div class="text-xs text-stone-400 mt-0.5">${done}/${units.length} · ${pct}%</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="w-16 bg-stone-100 h-1 rounded-full overflow-hidden">
+                  <div class="bg-stone-500 h-full rounded-full" style="width:${pct}%"></div>
+                </div>
+                <span class="text-stone-300 text-xs">▼</span>
+              </div>
+            </button>
+            <div id="cr-${p.id}-${ci}" class="hidden border-t border-stone-50">
+              ${c.link?`<div class="px-4 pt-3"><a href="${c.link}" target="_blank" class="text-xs text-blue-400">🔗 課程連結</a></div>`:''}
+              <div class="px-4 py-2 space-y-0.5">
+                ${units.map((u,ui)=>`
+                  <label class="flex items-center gap-3 py-2 border-b border-stone-50 last:border-0 cursor-pointer hover:bg-stone-50 rounded px-1">
+                    <input type="checkbox" ${u.done?'checked':''} onchange="toggleMultiUnit('${p.id}',${ci},${ui})">
+                    <span class="text-sm ${u.done?'text-stone-400 line-through':'text-stone-700'}">${u.name}</span>
+                  </label>`).join('')}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    return;
+  }
+
+  // 單課程模式（原本）
   const units = p.units || [];
   const done = units.filter(u=>u.done).length;
   const pct = units.length ? Math.round(done/units.length*100) : 0;
@@ -811,6 +863,24 @@ function renderCourse(p, el) {
 function toggleUnit(pid, i) {
   const p = S.projects.find(x=>x.id===pid);
   if (p && p.units) { p.units[i].done = !p.units[i].done; save(); renderProjectsPage(pid); }
+}
+
+function toggleMultiUnit(pid, ci, ui) {
+  const p = S.projects.find(x=>x.id===pid);
+  if (p && p.courses && p.courses[ci] && p.courses[ci].units) {
+    p.courses[ci].units[ui].done = !p.courses[ci].units[ui].done;
+    save();
+    // 只更新進度數字，不重新渲染（避免折疊列表跳回去）
+    const allUnits = p.courses.flatMap(c=>c.units||[]);
+    const allDone  = allUnits.filter(u=>u.done).length;
+    const allPct   = allUnits.length ? Math.round(allDone/allUnits.length*100) : 0;
+    const c = p.courses[ci]; const units = c.units||[];
+    const done = units.filter(u=>u.done).length;
+    const pct  = units.length ? Math.round(done/units.length*100) : 0;
+    // update overall bar (if element exists)
+    const bar = document.querySelector('#page-projects .bg-stone-700');
+    if (bar) bar.style.width = allPct + '%';
+  }
 }
 
 function showAddUnit(pid) {
@@ -1317,6 +1387,64 @@ const GUOKAO_SCHEDULE = [
   {theme:'輕讀考前看 + 保持作息',days:['輕讀考前看（前半）＋充足休息','輕讀考前看（後半）＋充足休息','最愛口訣溫習＋放鬆心情','考前一天：輕讀考前看＋早點睡 🌙','考試日——加油！你可以的！🎉']},
 ];
 
+const ONLINE_COURSES = [
+  {id:'chen', name:'陳茻 古文課', link:'', units:[
+    "1-1. 這世界太扯了我不行：屈原","1-2. 那個最不幸的男人：司馬遷","1-3. 我是不是生錯了時代：鮑照","1-4. 哪會哪會同款，貶謫這條路：韓愈","1-5. 穿山越嶺來反省：永州觀光","1-6. 越貶越強的硬骨頭：岳陽樓記","1-7. 廟堂原來那麼高：朱老夫子","1-8. 余不再憶童稚時：沈復",
+    "2-1. 賞花泛月尋常事：春江花月夜","2-2. 地球啊請借給我能量吧：謝靈運","2-3. 一宅天下無難事：山水遊記","2-4. 史上最猛極限登山客：徐霞客","2-5. 哥喝的一直都不是酒：隱藏在飲酒文化","2-6. 千杯千杯再千杯：盛唐氣象","2-7. 掛上這個名字一定賣爆：書籍出版","2-8. 穿著PRADA的文人：士大夫品味","2-9. 人類最好的朋友：古代寵物","2-10. 風流身影後的苦悶心事",
+    "3-1. 路上撿到的音樂奇才：許雲封","3-2. 學音樂的小孩不會變壞：儒者音樂","3-3. 天涯一曲肝腸斷：知音","3-4. 請救救我的耳朵：白居易","3-5. 一言不合就粉墨登場：關漢卿","3-6. 老去只在一瞬間：湯顯祖","3-7. 走筆至此你要去哪裡：三大行書","3-8. 意態猶來畫不成：文人與畫匠","3-9. 不知道為何，就是想唱歌：詩經","3-10. 雲霧繚繞的夢幻國度：楚辭",
+    "4-1. 嗚呼哀哉尚饗：祭文","4-2. 於是我們也成為歷史：蘭亭集序","4-3. 勸君更進Ｎ杯酒：送別","4-4. 我的愛情好像一把火","4-5. 不知怎麼就遇見女神男神：人鬼神戀曲","4-6. 生命中最悲慘的一天：戰爭","4-7. 終於看開國回不來：遺民詩","4-8. 直接梭哈結束這回合：刺客列傳","4-9. 苦海無邊佛在招手：佛學","4-10. 到底嗑多少給我來一點：文人煉丹"
+  ].map(n=>({name:n,done:false}))},
+  {id:'chu', name:'朱宥勳 文學課', link:'', units:[
+    "4/12 文學不是靠「感覺」的：文本分析","4/19 從喜好到批評：如何評價","4/26 文學是什麼：理論是什麼","5/3 讀文學，為什麼要插政治","5/10 遊戲開始前，規則已誕生","5/17 作品是怎麼生出來的","5/24 作品後來去了哪裡：文學社群","5/31 你來添磚，或者拆瓦：寫作實務","6/7 故事的脊椎：敘事框架","6/14 捏塑血肉與陰影：細節到象徵","6/21 口是心非，乃是人言：對白"
+  ].map(n=>({name:n,done:false}))},
+  {id:'hsu', name:'徐玉蘭 八字課', link:'', units:[
+    "零、2026 流年運勢全解析","0-1. 2026 最詳細流年運勢解析","0-2. 八字的流派與演變",
+    "一、知命｜掌握你的人生基礎設定","1-1. 找日主｜認識八字命盤與核心能量","1-2-1. 天干與地支（天干）","1-2-2. 天干與地支（地支）","1-3. 定格局｜命盤能量的傾斜方向","1-4. 抓用神｜把命盤能量回歸平衡的方式","1-5. 日常策略｜金木水火土的五行補運方法","1-6. 十神角色｜掌握壓力、機會與資源","常見問題釋疑｜學員直播",
+    "二、論運｜什麼時候該前進、什麼時候該沉澱","2-0. 觀念複習｜五行能量的關係","2-1-1. 十年大運（身強）","2-1-2. 十年大運（身弱）","2-1-3. 十年大運（從格）","2-1-4. 十年大運（刑沖破害）","2-2. 流年運勢｜每年年度起伏","2-3. 太歲｜犯太歲注意事項","2-4. 日常避凶｜犯小人日、意外注意",
+    "三、財富與事業","3-1. 財旺時機｜財運流年","3-2. 財富機會｜得財機會與漏財時機","3-3. 得財方式｜最適合你的賺錢模式","3-4. 工作運｜每月工作機會日","3-5. 事業夥伴｜對事業加分的靈魂伴侶",
+    "四、感情姻緣","4-1. 命定姻緣｜命盤中夫妻宮","4-2-1. 正緣對象（一）","4-2-2. 正緣對象（二）","4-3. 相處模式｜與另一半的相處策略","4-4. 桃花時機｜每月桃花日","4-5. 桃花危機｜爛桃花、離婚時機","4-6. 八字合盤｜兩人互補","4-7. 補桃花方式｜五行桃花顏色方位",
+    "五、健康注意事項","5-1. 健康核心｜五行能量與體質分析","5-2. 日常保養｜每月健康注意日","5-3. 身強體壯｜健康問題的預防",
+    "六、家人緣分","6-1. 家人相處｜與父母、孩子","6-2. 子女緣分｜子息宮、易懷孕時機","6-3. 家人健康與家庭風險","6-4. 手足關係","6-5. 家庭變動｜遷居、搬家",
+    "七、人際關係","7-1. 朋友助力｜是朋友還是小人？","7-2. 溝通模式｜與上下級的溝通策略",
+    "八、結語","8-1. 關於這堂人生八字應用課"
+  ].map(n=>({name:n,done:false}))},
+  {id:'exam', name:'國考 AI Tutor', link:'', units:[
+    "Topic 0: 課程導航與應考策略","0.1 課程路線圖導覽",
+    "Topic 1: 內分泌科：甲狀腺、腎上腺與腦下垂體","1.1 甲狀腺功能亢進","1.2 甲狀腺危象","1.3 甲狀腺功能低下","1.4 腎上腺皮質不全","1.5 Cushing 症候群","1.6 Hyperaldosteronism","1.7 Pheochromocytoma","1.8 腦下垂體疾病",
+    "Topic 2: 腎臟科：酸鹼與電解質","2.1 酸鹼判讀六步驟","2.2 代謝性酸中毒","2.3 代謝性鹼中毒","2.4 低鈉與高鈉血症","2.5 鉀離子異常",
+    "Topic 3: 腎臟科：腎臟疾病","3.1 急性腎損傷（AKI）","3.2 AKI 常見原因","3.3 慢性腎臟病（CKD）","3.4 腎絲球疾病","3.5 尿液分析","3.6 腎結石",
+    "Topic 4: 感染科：肺炎、泌尿道與皮膚","4.1 CAP vs HAP","4.2 非典型肺炎","4.3 泌尿道感染","4.4 皮膚軟組織感染","4.5 黴菌感染",
+    "Topic 5: 感染科：菌血症、心內膜炎、結核、HIV","5.1 菌血症","5.2 感染性心內膜炎","5.3 結核病診斷","5.4 結核病治療","5.5 HIV/AIDS","5.6 HIV 治療",
+    "Topic 6: 內分泌科：糖尿病與血鈣","6.1 糖尿病診斷","6.2 T2DM 藥物治療","6.3 DKA","6.4 HHS","6.5 高鈣與低鈣","6.6 糖尿病慢性併發症",
+    "Topic 7: 風濕免疫科","7.1 風濕病評估","7.2 類風濕性關節炎","7.3 痛風與假性痛風","7.4 血清陰性脊椎關節病","7.5 SLE","7.6 結締組織病","7.7 血管炎",
+    "Topic 8: 心臟科：ECG 判讀","8.1 ECG 系統化判讀","8.2 束枝傳導阻滯","8.3 ST 段與 T 波異常","8.4 QT 延長","8.5 LVH 與 RVH",
+    "Topic 9: 胸痛與冠心病","9.1 胸痛鑑別診斷","9.2 穩定性冠心病","9.3 ACS 分類","9.4 ACS 緊急治療","9.5 PCI 適應症",
+    "Topic 10: 心臟衰竭","10.1 心衰分類","10.2 心衰診斷工具","10.3 HFrEF 核心治療","10.4 急性失代償心衰","10.5 心肌病變",
+    "Topic 11: 心律不整、瓣膜病","11.1 心律不整判讀","11.2 心房顫動","11.3 瓣膜性心臟病","11.4 心包疾病","11.5 高血壓","11.6 暈厥",
+    "Topic 12: 肺臟科：阻塞性肺病","12.1 呼吸困難診斷","12.2 肺功能檢查","12.3 氣喘","12.4 COPD","12.5 過敏反應",
+    "Topic 13: 肺臟科：ILD、肋膜、栓塞","13.1 間質性肺病","13.2 肋膜積液","13.3 肺栓塞診斷","13.4 DVT 與 PE 治療","13.5 肺高壓",
+    "Topic 14: 呼吸衰竭、敗血症","14.1 呼吸衰竭","14.2 ARDS","14.3 敗血症定義","14.4 敗血症處置","14.5 休克分類",
+    "Topic 15: 腸胃科：上消化道與肝膽","15.1 食道與胃部疾病","15.2 消化道出血","15.3 肝功能異常","15.4 病毒性肝炎","15.5 急性肝衰竭","15.6 肝硬化","15.7 膽道疾病與胰臟炎",
+    "Topic 16: 腸胃科：下消化道","16.1 腹瀉鑑別","16.2 IBD 鑑別","16.3 IBD 治療","16.4 腸道缺血",
+    "Topic 17: 血液科：貧血、出血、凝血","17.1 貧血分類","17.2 溶血性貧血","17.3 血小板異常","17.4 凝血異常","17.5 DIC","17.6 抗凝藥物逆轉","17.7 高凝狀態",
+    "Topic 18: 血液腫瘤科","18.1 MDS","18.2 MPN","18.3 AML vs ALL","18.4 CML vs CLL","18.5 淋巴瘤","18.6 多發性骨髓瘤","18.7 腫瘤科緊急症",
+    "Topic 19: 神經內科","19.1 意識狀態改變","19.2 譫妄","19.3 癲癇","19.4 缺血性中風","19.5 TIA 與二次預防","19.6 神經肌肉疾病","19.7 頭痛",
+    "Topic 20: 臨床推理整合","20.1 心臟與腎臟整合","20.2 感染與血液整合","20.3 內分泌與代謝整合","20.4 高頻考點複習","20.5 考前策略"
+  ].map(n=>({name:n,done:false}))}
+];
+
+function initOnlineCourses() {
+  if (S.projects.find(p => p.id === 'online_courses')) return;
+  S.projects.push({
+    id: 'online_courses',
+    name: '線上課',
+    emoji: '🖥️',
+    template: '課程型',
+    courses: JSON.parse(JSON.stringify(ONLINE_COURSES))
+  });
+  save();
+}
+
 function initGuokaoProject() {
   if (S.projects.find(p => p.id === 'guokao')) return;
   S.projects.unshift({
@@ -1338,6 +1466,7 @@ function initGuokaoProject() {
 
 load();
 initGuokaoProject();
+initOnlineCourses();
 renderSbProjects();
 renderSbCollections();
 nav('today');

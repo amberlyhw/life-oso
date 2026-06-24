@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life OSO</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Life OSO">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .page { display: none; }
+  .page.active { display: block; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: #e7e5e4; border-radius: 2px; }
+  textarea { resize: none; }
+  .nav-item { transition: background 0.15s; }
+  .nav-item.active { background: #e7e5e4; color: #1c1917; font-weight: 600; }
+  .bnav-btn.active { color: #1c1917; }
+  input[type=checkbox] { accent-color: #1c1917; width: 16px; height: 16px; cursor: pointer; }
+</style>
+</head>
+<body class="bg-white text-stone-800 h-screen overflow-hidden">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ===== SIDEBAR (desktop) ===== -->
+  <aside class="hidden md:flex flex-col w-52 shrink-0 bg-stone-50 border-r border-stone-100 h-full">
+    <div class="px-4 pt-6 pb-3">
+      <div class="text-xs font-black tracking-widest text-stone-300 mb-2">LIFE OSO</div>
+      <div class="text-sm text-amber-500 font-medium" id="sb-streak">🔥 0天</div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-2 pb-2">
+      <button onclick="nav('today')" id="snav-today" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm text-stone-500 flex items-center gap-2 mb-0.5">
+        📅 今日
+      </button>
+      <button onclick="nav('coins')" id="snav-coins" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm text-stone-500 flex items-center gap-2 mb-3">
+        💰 映幣
+      </button>
+
+      <div class="px-3 mb-1 flex items-center justify-between">
+        <span class="text-xs font-bold tracking-wider text-stone-300">專案</span>
+        <button onclick="showAddProject()" class="text-stone-300 hover:text-stone-500 text-xl leading-none pb-0.5">+</button>
+      </div>
+      <div id="sb-projects" class="mb-3"></div>
+
+      <div class="px-3 mb-1">
+        <span class="text-xs font-bold tracking-wider text-stone-300">收藏</span>
+      </div>
+      <div id="sb-collections"></div>
+    </nav>
+
+    <div class="border-t border-stone-100 p-2">
+      <button onclick="nav('settings')" id="snav-settings" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm text-stone-500 flex items-center gap-2">
+        ⚙️ 設定
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main id="main" class="flex-1 overflow-y-auto pb-16 md:pb-0">
+
+    <!-- TODAY -->
+    <div id="page-today" class="page active max-w-xl mx-auto px-4 py-6">
+      <div class="mb-6">
+        <div class="text-xl font-bold" id="today-date"></div>
+        <div class="flex items-center gap-3 mt-1 flex-wrap">
+          <span class="text-amber-500 font-medium text-sm" id="today-streak">🔥 0天連續</span>
+          <span class="text-stone-400 text-sm" id="today-rate">本月 --%</span>
+          <span class="text-amber-400 text-sm font-medium" id="today-coins">💰 0映幣</span>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">今天有做的事</div>
+        <div id="habits-list" class="space-y-2"></div>
+      </div>
+
+      <div>
+        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">今日日記</div>
+        <textarea id="diary-input" rows="6"
+          class="w-full p-3 text-sm text-stone-700 bg-stone-50 rounded-xl border border-stone-100 focus:outline-none focus:border-stone-300 leading-relaxed"
+          placeholder="今天發生了什麼..."></textarea>
+      </div>
+    </div>
+
+    <!-- COINS -->
+    <div id="page-coins" class="page max-w-xl mx-auto px-4 py-6">
+      <h1 class="text-xl font-bold mb-6">💰 映幣</h1>
+
+      <div class="bg-amber-50 rounded-2xl p-5 mb-6 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-amber-500 font-medium mb-1">當前餘額</div>
+          <div class="text-3xl font-bold text-amber-500" id="coins-bal">0</div>
+          <div class="text-xs text-amber-300 mt-1">= NT$ <span id="coins-nt">0</span></div>
+        </div>
+        <span class="text-4xl">💰</span>
+      </div>
+
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold tracking-wider text-stone-300">WISH LIST</div>
+          <button onclick="showAddWish()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+        </div>
+        <div id="wish-list" class="space-y-3"></div>
+      </div>
+
+      <div>
+        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">收支紀錄</div>
+        <div id="coin-log"></div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div id="page-projects" class="page max-w-xl mx-auto px-4 py-6">
+      <div id="projects-content"></div>
+    </div>
+
+    <!-- COLLECTIONS -->
+    <div id="page-collections" class="page max-w-xl mx-auto px-4 py-6">
+      <div id="collections-content"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="page-settings" class="page max-w-xl mx-auto px-4 py-6">
+      <h1 class="text-xl font-bold mb-6">⚙️ 設定</h1>
+
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold tracking-wider text-stone-300">今天有做的事</div>
+          <button onclick="showAddHabit()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+        </div>
+        <div id="settings-habits" class="space-y-1"></div>
+      </div>
+
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold tracking-wider text-stone-300">收藏類別</div>
+          <button onclick="showAddColCat()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+        </div>
+        <div id="settings-cols" class="space-y-1"></div>
+      </div>
+
+      <div>
+        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">資料</div>
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="exportData()" class="px-4 py-2 text-sm bg-stone-100 hover:bg-stone-200 rounded-lg font-medium">匯出 JSON</button>
+          <button onclick="importData()" class="px-4 py-2 text-sm bg-stone-100 hover:bg-stone-200 rounded-lg font-medium">匯入備份</button>
+          <button onclick="clearData()" class="px-4 py-2 text-sm bg-red-50 hover:bg-red-100 text-red-400 rounded-lg font-medium">清除所有資料</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== BOTTOM NAV (mobile) ===== -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-100 z-40 flex">
+  <button onclick="nav('today')" id="bnav-today" class="bnav-btn flex-1 flex flex-col items-center py-2 gap-0.5 text-stone-300">
+    <span class="text-xl">📅</span><span class="text-xs font-medium">今日</span>
+  </button>
+  <button onclick="nav('coins')" id="bnav-coins" class="bnav-btn flex-1 flex flex-col items-center py-2 gap-0.5 text-stone-300">
+    <span class="text-xl">💰</span><span class="text-xs font-medium">映幣</span>
+  </button>
+  <button onclick="nav('projects')" id="bnav-projects" class="bnav-btn flex-1 flex flex-col items-center py-2 gap-0.5 text-stone-300">
+    <span class="text-xl">📋</span><span class="text-xs font-medium">專案</span>
+  </button>
+  <button onclick="nav('collections')" id="bnav-collections" class="bnav-btn flex-1 flex flex-col items-center py-2 gap-0.5 text-stone-300">
+    <span class="text-xl">📚</span><span class="text-xs font-medium">收藏</span>
+  </button>
+</nav>
+
+<!-- ===== MODAL ===== -->
+<div id="modal" class="hidden fixed inset-0 bg-black/30 z-50 flex items-end md:items-center justify-center" onclick="closeModal(event)">
+  <div class="bg-white rounded-t-2xl md:rounded-2xl p-5 w-full max-w-sm shadow-xl" onclick="event.stopPropagation()">
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+const DEFAULT_HABITS = [
+  {id:'exercise', name:'運動', emoji:'💪', coins:60, type:'choice', options:['跑步','重訓','瑜珈','游泳']},
+  {id:'reading',  name:'閱讀', emoji:'📖', coins:40, type:'text',   placeholder:'書名'},
+  {id:'learning', name:'學習', emoji:'🎓', coins:40, type:'choice', options:['醫學','人類學','AI','財經']},
+  {id:'writing',  name:'寫作', emoji:'✍️', coins:40, type:'text',   placeholder:'主題'},
+  {id:'drama',    name:'看劇', emoji:'🎬', coins:20, type:'text',   placeholder:'劇名'},
+  {id:'craft',    name:'手作', emoji:'🧶', coins:20, type:'text',   placeholder:'做了什麼'},
+  {id:'cooking',  name:'煮飯', emoji:'🍳', coins:30, type:'text',   placeholder:'菜名'},
+  {id:'meditation',name:'靜心',emoji:'🧘', coins:20, type:'none'}
+];
+
+const DEFAULT_COL_CATS = [
+  {id:'books',   name:'看過的書',  emoji:'📚'},
+  {id:'movies',  name:'看過的電影',emoji:'🎬'},
+  {id:'cooking', name:'煮過的菜',  emoji:'🍳'},
+  {id:'fitness', name:'健身紀錄',  emoji:'💪'}
+];
+
+function freshState() {
+  return {
+    streak: 0,
+    lastActiveDate: null,
+    coins: 0,
+    coinLog: [],
+    wishList: [],
+    dayLog: {},      // {YYYY-MM-DD: {habits:{id:{done,detail,earned}}, diary}}
+    projects: [],
+    colData: {},     // {catId: [{name,date,note}]}
+    habits: JSON.parse(JSON.stringify(DEFAULT_HABITS)),
+    colCats: JSON.parse(JSON.stringify(DEFAULT_COL_CATS))
+  };
+}
+
+let S = freshState();
+
+function save() { localStorage.setItem('life-oso-v1', JSON.stringify(S)); }
+function load() {
+  try {
+    const raw = localStorage.getItem('life-oso-v1');
+    if (raw) S = Object.assign(freshState(), JSON.parse(raw));
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+function todayStr() { return new Date().toISOString().slice(0,10); }
+
+function fmtDate(s) {
+  const d = new Date(s + 'T12:00:00');
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} 週${'日一二三四五六'[d.getDay()]}`;
+}
+
+function getDayLog(date) {
+  if (!S.dayLog[date]) S.dayLog[date] = { habits: {}, diary: '' };
+  return S.dayLog[date];
+}
+
+function calcStreak() {
+  let d = new Date(), streak = 0;
+  while (true) {
+    const s = d.toISOString().slice(0,10);
+    const log = S.dayLog[s];
+    const anyDone = log && Object.values(log.habits).some(h => h.done);
+    if (!anyDone) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function calcMonthRate() {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth()+1, today = now.getDate();
+  let done = 0;
+  for (let d = 1; d <= today; d++) {
+    const s = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const log = S.dayLog[s];
+    if (log && Object.values(log.habits).some(h => h.done)) done++;
+  }
+  return Math.round(done / today * 100);
+}
+
+// ─────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────
+let curPage = 'today', curProjectId = null, curColId = null;
+
+function nav(page, id) {
+  curPage = page;
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(el => el.classList.remove('active'));
+
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+
+  const snavEl = document.getElementById('snav-' + page);
+  if (snavEl) snavEl.classList.add('active');
+  const bnavEl = document.getElementById('bnav-' + page);
+  if (bnavEl) bnavEl.classList.add('active');
+
+  document.getElementById('main').scrollTo(0, 0);
+
+  if (page === 'today') renderToday();
+  else if (page === 'coins') renderCoins();
+  else if (page === 'projects') renderProjectsPage(id);
+  else if (page === 'collections') renderCollectionsPage(id);
+  else if (page === 'settings') renderSettings();
+}
+
+// ─────────────────────────────────────────
+// TODAY
+// ─────────────────────────────────────────
+function renderToday() {
+  const t = todayStr();
+  document.getElementById('today-date').textContent = fmtDate(t);
+  const streak = calcStreak();
+  S.streak = streak;
+  document.getElementById('today-streak').textContent = `🔥 ${streak}天連續`;
+  document.getElementById('sb-streak').textContent = `🔥 ${streak}天`;
+  document.getElementById('today-rate').textContent = `本月 ${calcMonthRate()}%`;
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
+  document.getElementById('diary-input').value = getDayLog(t).diary || '';
+  renderHabits();
+}
+
+function renderHabits() {
+  const t = todayStr();
+  const log = getDayLog(t);
+  document.getElementById('habits-list').innerHTML = S.habits.map(h => {
+    const hlog = log.habits[h.id] || {};
+    const done = hlog.done || false;
+    const detail = hlog.detail || '';
+
+    let expandHtml = '';
+    if (done && h.type === 'choice') {
+      expandHtml = `<div class="flex flex-wrap gap-2 px-4 pb-3">
+        ${h.options.map(o => `
+          <button onclick="setDetail('${h.id}','${o}')"
+            class="px-3 py-1 rounded-full text-xs font-medium border transition-colors
+            ${detail===o ? 'bg-stone-800 text-white border-stone-800' : 'border-stone-200 text-stone-400 hover:border-stone-400'}">
+            ${o}
+          </button>`).join('')}
+      </div>`;
+    } else if (done && h.type === 'text') {
+      expandHtml = `<div class="px-4 pb-3">
+        <input type="text" value="${detail.replace(/"/g,'&quot;')}" placeholder="${h.placeholder||''}"
+          oninput="setDetail('${h.id}',this.value)"
+          class="w-full text-sm px-3 py-2 bg-stone-50 rounded-lg border border-stone-100 focus:outline-none focus:border-stone-300">
+      </div>`;
+    }
+
+    return `<div class="border border-stone-100 rounded-xl overflow-hidden">
+      <button class="w-full flex items-center gap-3 px-4 py-3 text-left" onclick="toggleHabit('${h.id}')">
+        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all
+          ${done ? 'bg-stone-800 border-stone-800' : 'border-stone-300'}">
+          ${done ? `<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+          </svg>` : ''}
+        </div>
+        <span class="text-base">${h.emoji}</span>
+        <span class="text-sm font-medium ${done?'text-stone-400 line-through':'text-stone-700'}">${h.name}</span>
+        <span class="ml-auto text-xs text-amber-400 font-medium shrink-0">+${h.coins}</span>
+      </button>
+      ${expandHtml}
+    </div>`;
+  }).join('');
+}
+
+function toggleHabit(id) {
+  const t = todayStr();
+  const log = getDayLog(t);
+  if (!log.habits[id]) log.habits[id] = {done:false, detail:'', earned:0};
+  const h = S.habits.find(x => x.id === id);
+  if (!h) return;
+
+  if (!log.habits[id].done) {
+    log.habits[id].done = true;
+    log.habits[id].earned = h.coins;
+    S.coins += h.coins;
+    S.coinLog.unshift({date: t, amount: h.coins, note: `${h.emoji} ${h.name}`});
+  } else {
+    const earned = log.habits[id].earned || 0;
+    S.coins = Math.max(0, S.coins - earned);
+    S.coinLog = S.coinLog.filter((l,i) =>
+      !(i === S.coinLog.findIndex(x => x.date===t && x.note.includes(h.name)))
+    );
+    log.habits[id].done = false;
+    log.habits[id].earned = 0;
+    log.habits[id].detail = '';
+  }
+  save();
+  renderHabits();
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
+  document.getElementById('today-streak').textContent = `🔥 ${calcStreak()}天連續`;
+  document.getElementById('sb-streak').textContent = `🔥 ${calcStreak()}天`;
+  document.getElementById('today-rate').textContent = `本月 ${calcMonthRate()}%`;
+}
+
+function setDetail(id, val) {
+  const log = getDayLog(todayStr());
+  if (!log.habits[id]) log.habits[id] = {done:true, detail:'', earned:0};
+  log.habits[id].detail = val;
+  save();
+  renderHabits();
+}
+
+document.getElementById('diary-input').addEventListener('input', function() {
+  getDayLog(todayStr()).diary = this.value;
+  save();
+});
+
+// ─────────────────────────────────────────
+// COINS
+// ─────────────────────────────────────────
+function renderCoins() {
+  document.getElementById('coins-bal').textContent = S.coins;
+  document.getElementById('coins-nt').textContent = S.coins.toLocaleString();
+
+  const wl = document.getElementById('wish-list');
+  if (!S.wishList.length) {
+    wl.innerHTML = '<p class="text-sm text-stone-300 py-2">還沒有願望</p>';
+  } else {
+    wl.innerHTML = S.wishList.map((w,i) => {
+      const pct = Math.min(100, Math.round(S.coins / w.price * 100));
+      return `<div class="border border-stone-100 rounded-xl p-4">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <div class="font-medium text-sm">${w.name}</div>
+            <div class="text-xs text-stone-400 mt-0.5">NT$ ${w.price.toLocaleString()}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            ${w.bought
+              ? '<span class="text-xs text-green-500 font-medium">已購買 ✓</span>'
+              : `<button onclick="buyWish(${i})" class="text-xs px-2 py-1 bg-amber-50 text-amber-500 rounded-lg font-medium hover:bg-amber-100">購買</button>`}
+            <button onclick="deleteWish(${i})" class="text-stone-300 hover:text-red-400 text-sm">✕</button>
+          </div>
+        </div>
+        <div class="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden">
+          <div class="bg-amber-400 h-full rounded-full" style="width:${pct}%"></div>
+        </div>
+        <div class="text-xs text-stone-400 mt-1">${pct}% 達成</div>
+      </div>`;
+    }).join('');
+  }
+
+  const cl = document.getElementById('coin-log');
+  if (!S.coinLog.length) {
+    cl.innerHTML = '<p class="text-sm text-stone-300 py-2">尚無紀錄</p>';
+  } else {
+    cl.innerHTML = S.coinLog.slice(0,50).map(l => `
+      <div class="flex items-center py-2 border-b border-stone-50 gap-3">
+        <span class="text-xs text-stone-300 shrink-0">${l.date}</span>
+        <span class="text-sm text-stone-600 flex-1">${l.note}</span>
+        <span class="text-sm font-medium shrink-0 ${l.amount>0?'text-amber-500':'text-red-400'}">
+          ${l.amount>0?'+':''}${l.amount}
+        </span>
+      </div>`).join('');
+  }
+}
+
+function showAddWish() {
+  modal(`<h3 class="font-bold mb-4">新增願望</h3>
+    <div class="space-y-3">
+      <input id="wn" type="text" placeholder="想要什麼？"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <input id="wp" type="number" placeholder="價格 NT$"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addWish()" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addWish() {
+  const name = document.getElementById('wn').value.trim();
+  const price = parseInt(document.getElementById('wp').value);
+  if (!name || !price) return;
+  S.wishList.push({name, price, bought:false});
+  save(); closeModal(); renderCoins();
+}
+
+function buyWish(i) {
+  const w = S.wishList[i];
+  if (S.coins < w.price) { alert(`映幣不足，還差 ${w.price - S.coins} 映幣`); return; }
+  if (!confirm(`購買「${w.name}」，花費 ${w.price} 映幣？`)) return;
+  S.coins -= w.price;
+  S.wishList[i].bought = true;
+  S.coinLog.unshift({date: todayStr(), amount: -w.price, note: `🛍️ ${w.name}`});
+  save(); renderCoins();
+}
+
+function deleteWish(i) {
+  if (!confirm('刪除？')) return;
+  S.wishList.splice(i,1);
+  save(); renderCoins();
+}
+
+// ─────────────────────────────────────────
+// PROJECTS
+// ─────────────────────────────────────────
+function renderSbProjects() {
+  document.getElementById('sb-projects').innerHTML = S.projects.map(p =>
+    `<button onclick="nav('projects','${p.id}')" id="snav-projects-${p.id}"
+      class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm text-stone-500 flex items-center gap-2 mb-0.5">
+      ${p.emoji||'📋'} ${p.name}
+    </button>`).join('');
+}
+
+function renderProjectsPage(id) {
+  const el = document.getElementById('projects-content');
+  const p = id ? S.projects.find(x => x.id===id) : null;
+
+  if (!p) {
+    el.innerHTML = S.projects.length === 0
+      ? `<div class="text-center py-20">
+          <div class="text-4xl mb-3">📋</div>
+          <p class="text-stone-300 text-sm mb-4">還沒有專案</p>
+          <button onclick="showAddProject()" class="px-4 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">+ 新增專案</button>
+        </div>`
+      : `<div class="flex items-center justify-between mb-6">
+          <h1 class="text-xl font-bold">專案</h1>
+          <button onclick="showAddProject()" class="text-sm text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+        </div>
+        <div class="space-y-3">
+          ${S.projects.map(p => `
+            <div onclick="nav('projects','${p.id}')" class="border border-stone-100 rounded-xl p-4 cursor-pointer hover:bg-stone-50 flex items-center gap-3">
+              <span class="text-2xl">${p.emoji||'📋'}</span>
+              <div>
+                <div class="font-medium text-sm">${p.name}</div>
+                <div class="text-xs text-stone-400">${p.template}</div>
+              </div>
+              <span class="ml-auto text-stone-300 text-sm">→</span>
+            </div>`).join('')}
+        </div>`;
+    return;
+  }
+
+  if (p.template === '備考型') renderStudy(p, el);
+  else if (p.template === '課程型') renderCourse(p, el);
+  else if (p.template === '寫作型') renderWriting(p, el);
+  else renderGeneric(p, el);
+}
+
+function backBtn() {
+  return `<button onclick="nav('projects')" class="text-stone-400 hover:text-stone-600 mr-2">←</button>`;
+}
+
+// 備考型
+function renderStudy(p, el) {
+  const weeks = p.weeks || [];
+  const total = p.totalWeeks || 30;
+  const cwNum = calcCurrentWeek(p);
+  const doneWeeks = weeks.filter(w => w.days && w.days.length && w.days.every(d=>d.done)).length;
+  const pct = Math.round(doneWeeks / total * 100);
+  const cw = weeks.find(w => w.num === cwNum);
+  const others = weeks.filter(w => w.num !== cwNum).sort((a,b) => b.num - a.num);
+
+  el.innerHTML = `
+    <div class="flex items-center mb-1">${backBtn()}<h1 class="text-xl font-bold">${p.emoji||'🩺'} ${p.name}</h1></div>
+    ${p.deadline ? `<p class="text-xs text-stone-400 mb-4 ml-8">考試日：${p.deadline}</p>` : '<div class="mb-4"></div>'}
+    <div class="mb-6 ml-1">
+      <div class="flex justify-between text-xs text-stone-400 mb-1.5">
+        <span>W${cwNum} / ${total}</span><span>${pct}%</span>
+      </div>
+      <div class="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden">
+        <div class="bg-stone-700 h-full rounded-full transition-all" style="width:${pct}%"></div>
+      </div>
+    </div>
+
+    ${cw ? `
+    <div class="border-2 border-stone-200 rounded-xl overflow-hidden mb-3">
+      <div class="flex items-center gap-2 px-4 py-3 bg-stone-50">
+        <span class="text-xs bg-stone-800 text-white px-2 py-0.5 rounded-full font-medium">本週</span>
+        <span class="text-sm font-semibold">W${cw.num}</span>
+        ${cw.theme ? `<span class="text-xs text-stone-400">${cw.theme}</span>` : ''}
+      </div>
+      <div class="px-4 py-2">
+        ${(cw.days||[]).map((d,di) => `
+          <label class="flex items-center gap-3 py-2 cursor-pointer border-b border-stone-50 last:border-0">
+            <input type="checkbox" ${d.done?'checked':''} onchange="toggleDay('${p.id}',${cw.num},${di})">
+            <span class="text-sm ${d.done?'text-stone-400 line-through':'text-stone-700'}">${d.label}</span>
+          </label>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${others.length ? `
+    <div class="text-xs font-bold tracking-wider text-stone-300 mb-2 mt-4">所有週</div>
+    <div class="space-y-2">
+      ${others.map(w => {
+        const done = w.days && w.days.every(d=>d.done);
+        return `<div class="border border-stone-100 rounded-xl overflow-hidden">
+          <button class="w-full flex items-center justify-between px-4 py-3 text-left" onclick="document.getElementById('wk-${p.id}-${w.num}').classList.toggle('hidden')">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-stone-600">W${w.num}</span>
+              ${w.theme?`<span class="text-xs text-stone-400">${w.theme}</span>`:''}
+            </div>
+            <span class="text-xs ${done?'text-green-500':'text-stone-300'}">${done?'✓':'▼'}</span>
+          </button>
+          <div id="wk-${p.id}-${w.num}" class="hidden px-4 pb-3">
+            ${(w.days||[]).map((d,di) => `
+              <label class="flex items-center gap-3 py-1.5 cursor-pointer">
+                <input type="checkbox" ${d.done?'checked':''} onchange="toggleDay('${p.id}',${w.num},${di})">
+                <span class="text-sm ${d.done?'text-stone-400 line-through':'text-stone-600'}">${d.label}</span>
+              </label>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <button onclick="showAddWeek('${p.id}')"
+      class="mt-4 w-full py-3 text-sm text-stone-300 border border-dashed border-stone-200 rounded-xl hover:border-stone-400 hover:text-stone-500 transition-colors">
+      + 新增週計畫
+    </button>`;
+}
+
+function calcCurrentWeek(p) {
+  if (!p.startDate) return 1;
+  const diff = Math.floor((new Date() - new Date(p.startDate + 'T12:00:00')) / (7*24*60*60*1000)) + 1;
+  return Math.max(1, Math.min(diff, p.totalWeeks||30));
+}
+
+function toggleDay(pid, wnum, di) {
+  const p = S.projects.find(x=>x.id===pid);
+  const w = p && p.weeks && p.weeks.find(x=>x.num===wnum);
+  if (w && w.days) { w.days[di].done = !w.days[di].done; save(); }
+}
+
+function showAddWeek(pid) {
+  const p = S.projects.find(x=>x.id===pid);
+  const next = p.weeks && p.weeks.length ? Math.max(...p.weeks.map(w=>w.num))+1 : 1;
+  modal(`<h3 class="font-bold mb-4">新增週計畫 W${next}</h3>
+    <input id="wt" type="text" placeholder="本週主題（選填）"
+      class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none mb-3">
+    <div class="space-y-2 mb-4">
+      ${['週一','週二','週三','週四','週五'].map((d,i)=>`
+        <input id="wd${i}" type="text" placeholder="${d}"
+          class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">`).join('')}
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addWeek('${pid}',${next})" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addWeek(pid, num) {
+  const p = S.projects.find(x=>x.id===pid);
+  const theme = document.getElementById('wt').value.trim();
+  const days = [0,1,2,3,4].map(i=>document.getElementById('wd'+i).value.trim()).filter(Boolean).map(label=>({label,done:false}));
+  if (!p.weeks) p.weeks = [];
+  p.weeks.push({num, theme, days});
+  save(); closeModal(); renderProjectsPage(pid);
+}
+
+// 課程型
+function renderCourse(p, el) {
+  const units = p.units || [];
+  const done = units.filter(u=>u.done).length;
+  const pct = units.length ? Math.round(done/units.length*100) : 0;
+
+  el.innerHTML = `
+    <div class="flex items-center mb-4">${backBtn()}<h1 class="text-xl font-bold">${p.emoji||'🎓'} ${p.name}</h1></div>
+    <div class="mb-4">
+      <div class="flex justify-between text-xs text-stone-400 mb-1.5">
+        <span>${done}/${units.length} 單元</span><span>${pct}%</span>
+      </div>
+      <div class="w-full bg-stone-100 h-1.5 rounded-full overflow-hidden">
+        <div class="bg-stone-700 h-full rounded-full" style="width:${pct}%"></div>
+      </div>
+    </div>
+    ${p.link?`<a href="${p.link}" target="_blank" class="text-xs text-blue-400 mb-4 inline-block">🔗 課程連結</a>`:''}
+    <div class="space-y-0.5 mb-4">
+      ${units.map((u,i)=>`
+        <label class="flex items-center gap-3 py-2.5 border-b border-stone-50 cursor-pointer hover:bg-stone-50 rounded-lg px-1">
+          <input type="checkbox" ${u.done?'checked':''} onchange="toggleUnit('${p.id}',${i})">
+          <span class="text-sm ${u.done?'text-stone-400 line-through':'text-stone-700'}">${u.name}</span>
+        </label>`).join('')}
+    </div>
+    <button onclick="showAddUnit('${p.id}')"
+      class="w-full py-3 text-sm text-stone-300 border border-dashed border-stone-200 rounded-xl hover:border-stone-400 hover:text-stone-500 transition-colors">
+      + 新增單元
+    </button>`;
+}
+
+function toggleUnit(pid, i) {
+  const p = S.projects.find(x=>x.id===pid);
+  if (p && p.units) { p.units[i].done = !p.units[i].done; save(); renderProjectsPage(pid); }
+}
+
+function showAddUnit(pid) {
+  modal(`<h3 class="font-bold mb-4">新增單元</h3>
+    <input id="un" type="text" placeholder="單元名稱"
+      class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none mb-4">
+    <div class="flex gap-2">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addUnit('${pid}')" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addUnit(pid) {
+  const p = S.projects.find(x=>x.id===pid);
+  const name = document.getElementById('un').value.trim();
+  if (!name) return;
+  if (!p.units) p.units = [];
+  p.units.push({name, done:false});
+  save(); closeModal(); renderProjectsPage(pid);
+}
+
+// 寫作型
+function renderWriting(p, el) {
+  const works = p.works || [];
+  el.innerHTML = `
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center">${backBtn()}<h1 class="text-xl font-bold">${p.emoji||'✍️'} ${p.name}</h1></div>
+      <button onclick="showAddWork('${p.id}')" class="text-sm text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+    </div>
+    ${works.length===0?'<p class="text-stone-300 text-sm py-8 text-center">還沒有作品</p>':''}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-xs text-stone-300 border-b border-stone-100">
+          <th class="text-left py-2 pr-4 font-medium">標題</th>
+          <th class="text-left py-2 pr-4 font-medium">狀態</th>
+          <th class="text-left py-2 font-medium">備註</th>
+        </tr></thead>
+        <tbody>
+          ${works.map((w,i)=>`
+            <tr class="border-b border-stone-50 hover:bg-stone-50 group">
+              <td class="py-3 pr-4 font-medium text-stone-700">${w.title}</td>
+              <td class="py-3 pr-4">
+                <select onchange="updateWorkStatus('${p.id}',${i},this.value)"
+                  class="text-xs text-stone-500 bg-transparent border-0 outline-none cursor-pointer">
+                  ${['草稿','修改中','完成','擱置'].map(s=>`<option ${w.status===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+              </td>
+              <td class="py-3 text-xs text-stone-400">${w.note||'—'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function showAddWork(pid) {
+  modal(`<h3 class="font-bold mb-4">新增作品</h3>
+    <div class="space-y-3">
+      <input id="wtitle" type="text" placeholder="標題"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <select id="wstatus" class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+        <option>草稿</option><option>修改中</option><option>完成</option><option>擱置</option>
+      </select>
+      <input id="wnote" type="text" placeholder="備註（選填）"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addWork('${pid}')" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addWork(pid) {
+  const p = S.projects.find(x=>x.id===pid);
+  const title = document.getElementById('wtitle').value.trim();
+  if (!title) return;
+  if (!p.works) p.works = [];
+  p.works.push({title, status:document.getElementById('wstatus').value, note:document.getElementById('wnote').value.trim()});
+  save(); closeModal(); renderProjectsPage(pid);
+}
+
+function updateWorkStatus(pid, i, status) {
+  const p = S.projects.find(x=>x.id===pid);
+  if (p && p.works) { p.works[i].status = status; save(); }
+}
+
+// 通用型
+function renderGeneric(p, el) {
+  const tasks = p.tasks || [];
+  const done = tasks.filter(t=>t.done).length;
+  el.innerHTML = `
+    <div class="flex items-center mb-4">${backBtn()}<h1 class="text-xl font-bold">${p.emoji||'📋'} ${p.name}</h1></div>
+    <p class="text-xs text-stone-400 mb-4">${done}/${tasks.length} 完成</p>
+    <div class="space-y-0.5 mb-4">
+      ${tasks.map((t,i)=>`
+        <label class="flex items-center gap-3 py-2.5 border-b border-stone-50 cursor-pointer hover:bg-stone-50 rounded-lg px-1">
+          <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${p.id}',${i})">
+          <span class="text-sm ${t.done?'text-stone-400 line-through':'text-stone-700'}">${t.name}</span>
+        </label>`).join('')}
+    </div>
+    <button onclick="showAddTask('${p.id}')"
+      class="w-full py-3 text-sm text-stone-300 border border-dashed border-stone-200 rounded-xl hover:border-stone-400 hover:text-stone-500 transition-colors">
+      + 新增任務
+    </button>`;
+}
+
+function toggleTask(pid, i) {
+  const p = S.projects.find(x=>x.id===pid);
+  if (p && p.tasks) { p.tasks[i].done = !p.tasks[i].done; save(); renderProjectsPage(pid); }
+}
+
+function showAddTask(pid) {
+  modal(`<h3 class="font-bold mb-4">新增任務</h3>
+    <input id="tn" type="text" placeholder="任務名稱"
+      class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none mb-4">
+    <div class="flex gap-2">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addTask('${pid}')" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addTask(pid) {
+  const p = S.projects.find(x=>x.id===pid);
+  const name = document.getElementById('tn').value.trim();
+  if (!name) return;
+  if (!p.tasks) p.tasks = [];
+  p.tasks.push({name, done:false});
+  save(); closeModal(); renderProjectsPage(pid);
+}
+
+function showAddProject() {
+  modal(`<h3 class="font-bold mb-4">新增專案</h3>
+    <div class="space-y-3">
+      <div class="flex gap-2">
+        <input id="pe" type="text" placeholder="📋" maxlength="2"
+          class="w-14 px-2 py-2 text-lg text-center border border-stone-200 rounded-lg focus:outline-none">
+        <input id="pn" type="text" placeholder="專案名稱"
+          class="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      </div>
+      <select id="pt" class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+        <option value="備考型">📅 備考型（週計畫）</option>
+        <option value="課程型">🎓 課程型（單元清單）</option>
+        <option value="寫作型">✍️ 寫作型（作品追蹤）</option>
+        <option value="通用型">📋 通用型（任務清單）</option>
+      </select>
+      <input id="pd" type="date" class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none text-stone-500">
+      <p class="text-xs text-stone-400">截止日（選填）</p>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addProject()" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addProject() {
+  const name = document.getElementById('pn').value.trim();
+  if (!name) return;
+  const template = document.getElementById('pt').value;
+  const id = 'p' + Date.now();
+  const p = {id, name, emoji:document.getElementById('pe').value.trim()||'📋', template, deadline:document.getElementById('pd').value};
+  if (template==='備考型') { p.weeks=[]; p.totalWeeks=30; p.startDate=todayStr(); }
+  if (template==='課程型') { p.units=[]; p.link=''; }
+  if (template==='寫作型') { p.works=[]; }
+  if (template==='通用型') { p.tasks=[]; }
+  S.projects.push(p);
+  save(); closeModal(); renderSbProjects(); nav('projects', id);
+}
+
+// ─────────────────────────────────────────
+// COLLECTIONS
+// ─────────────────────────────────────────
+function renderSbCollections() {
+  document.getElementById('sb-collections').innerHTML = S.colCats.map(c =>
+    `<button onclick="nav('collections','${c.id}')"
+      class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm text-stone-500 flex items-center gap-2 mb-0.5">
+      ${c.emoji} ${c.name}
+    </button>`).join('');
+}
+
+function renderCollectionsPage(id) {
+  const el = document.getElementById('collections-content');
+  const cat = id ? S.colCats.find(c=>c.id===id) : null;
+
+  if (!cat) {
+    el.innerHTML = `
+      <h1 class="text-xl font-bold mb-6">收藏</h1>
+      <div class="space-y-3">
+        ${S.colCats.map(c=>`
+          <div onclick="nav('collections','${c.id}')" class="border border-stone-100 rounded-xl p-4 cursor-pointer hover:bg-stone-50 flex items-center gap-3">
+            <span class="text-2xl">${c.emoji}</span>
+            <div>
+              <div class="font-medium text-sm">${c.name}</div>
+              <div class="text-xs text-stone-400">${(S.colData[c.id]||[]).length} 項</div>
+            </div>
+            <span class="ml-auto text-stone-300">→</span>
+          </div>`).join('')}
+      </div>`;
+    return;
+  }
+
+  const items = S.colData[id] || [];
+  el.innerHTML = `
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center">
+        <button onclick="nav('collections')" class="text-stone-400 hover:text-stone-600 mr-2">←</button>
+        <h1 class="text-xl font-bold">${cat.emoji} ${cat.name}</h1>
+      </div>
+      <button onclick="showAddColItem('${id}')" class="text-sm text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+    </div>
+    ${items.length===0?'<p class="text-stone-300 text-sm py-8 text-center">還沒有紀錄</p>':''}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead><tr class="text-xs text-stone-300 border-b border-stone-100">
+          <th class="text-left py-2 pr-4 font-medium">名稱</th>
+          <th class="text-left py-2 pr-4 font-medium whitespace-nowrap">日期</th>
+          <th class="text-left py-2 font-medium">備註</th>
+          <th class="py-2 w-6"></th>
+        </tr></thead>
+        <tbody>
+          ${items.map((item,i)=>`
+            <tr class="border-b border-stone-50 hover:bg-stone-50 group">
+              <td class="py-3 pr-4 font-medium text-stone-700">${item.name}</td>
+              <td class="py-3 pr-4 text-xs text-stone-400 whitespace-nowrap">${item.date||'—'}</td>
+              <td class="py-3 text-xs text-stone-400">${item.note||'—'}</td>
+              <td class="py-3">
+                <button onclick="deleteColItem('${id}',${i})"
+                  class="text-stone-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">✕</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function showAddColItem(catId) {
+  modal(`<h3 class="font-bold mb-4">新增紀錄</h3>
+    <div class="space-y-3">
+      <input id="cn" type="text" placeholder="名稱"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <input id="cd" type="date" value="${todayStr()}"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <input id="cnote" type="text" placeholder="備註（選填）"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addColItem('${catId}')" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addColItem(catId) {
+  const name = document.getElementById('cn').value.trim();
+  if (!name) return;
+  if (!S.colData[catId]) S.colData[catId] = [];
+  S.colData[catId].unshift({name, date:document.getElementById('cd').value, note:document.getElementById('cnote').value.trim()});
+  save(); closeModal(); renderCollectionsPage(catId);
+}
+
+function deleteColItem(catId, i) {
+  if (!confirm('刪除？')) return;
+  S.colData[catId].splice(i,1);
+  save(); renderCollectionsPage(catId);
+}
+
+// ─────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────
+function renderSettings() {
+  document.getElementById('settings-habits').innerHTML = S.habits.map((h,i)=>`
+    <div class="flex items-center justify-between py-2.5 border-b border-stone-50">
+      <div class="flex items-center gap-2">
+        <span>${h.emoji}</span>
+        <span class="text-sm font-medium">${h.name}</span>
+        <span class="text-xs text-amber-400">+${h.coins}</span>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="editHabit(${i})" class="text-xs text-stone-400 hover:text-stone-700">編輯</button>
+        <button onclick="deleteHabit(${i})" class="text-xs text-stone-300 hover:text-red-400">刪除</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('settings-cols').innerHTML = S.colCats.map((c,i)=>`
+    <div class="flex items-center justify-between py-2.5 border-b border-stone-50">
+      <div class="flex items-center gap-2">
+        <span>${c.emoji}</span>
+        <span class="text-sm font-medium">${c.name}</span>
+      </div>
+      <button onclick="deleteColCat(${i})" class="text-xs text-stone-300 hover:text-red-400">刪除</button>
+    </div>`).join('');
+}
+
+function showAddHabit() {
+  modal(`<h3 class="font-bold mb-4">新增項目</h3>
+    <div class="space-y-3">
+      <div class="flex gap-2">
+        <input id="he" type="text" placeholder="🌟" maxlength="2"
+          class="w-14 px-2 py-2 text-lg text-center border border-stone-200 rounded-lg focus:outline-none">
+        <input id="hn" type="text" placeholder="項目名稱"
+          class="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      </div>
+      <input id="hc" type="number" placeholder="映幣值" value="20"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <select id="ht" class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+        <option value="none">單純打勾</option>
+        <option value="text">輸入文字</option>
+        <option value="choice">選擇選項</option>
+      </select>
+      <input id="hp" type="text" placeholder="說明文字（例：書名）"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addHabit()" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addHabit() {
+  const name = document.getElementById('hn').value.trim();
+  if (!name) return;
+  S.habits.push({
+    id:'h'+Date.now(), name,
+    emoji: document.getElementById('he').value.trim()||'⭐',
+    coins: parseInt(document.getElementById('hc').value)||20,
+    type: document.getElementById('ht').value,
+    placeholder: document.getElementById('hp').value.trim()
+  });
+  save(); closeModal(); renderSettings();
+}
+
+function editHabit(i) {
+  const h = S.habits[i];
+  modal(`<h3 class="font-bold mb-4">編輯項目</h3>
+    <div class="space-y-3">
+      <div class="flex gap-2">
+        <input id="he" type="text" value="${h.emoji}" maxlength="2"
+          class="w-14 px-2 py-2 text-lg text-center border border-stone-200 rounded-lg focus:outline-none">
+        <input id="hn" type="text" value="${h.name}"
+          class="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      </div>
+      <input id="hc" type="number" value="${h.coins}"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="saveHabit(${i})" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">儲存</button>
+    </div>`);
+}
+
+function saveHabit(i) {
+  S.habits[i].name  = document.getElementById('hn').value.trim();
+  S.habits[i].emoji = document.getElementById('he').value.trim();
+  S.habits[i].coins = parseInt(document.getElementById('hc').value)||20;
+  save(); closeModal(); renderSettings();
+}
+
+function deleteHabit(i) {
+  if (!confirm(`刪除「${S.habits[i].name}」？`)) return;
+  S.habits.splice(i,1); save(); renderSettings();
+}
+
+function showAddColCat() {
+  modal(`<h3 class="font-bold mb-4">新增收藏類別</h3>
+    <div class="flex gap-2 mb-4">
+      <input id="ce" type="text" placeholder="📌" maxlength="2"
+        class="w-14 px-2 py-2 text-lg text-center border border-stone-200 rounded-lg focus:outline-none">
+      <input id="ccn" type="text" placeholder="類別名稱"
+        class="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+    </div>
+    <div class="flex gap-2">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addColCat()" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addColCat() {
+  const name = document.getElementById('ccn').value.trim();
+  if (!name) return;
+  S.colCats.push({id:'c'+Date.now(), name, emoji:document.getElementById('ce').value.trim()||'📌'});
+  save(); closeModal(); renderSettings(); renderSbCollections();
+}
+
+function deleteColCat(i) {
+  if (!confirm(`刪除「${S.colCats[i].name}」類別？`)) return;
+  S.colCats.splice(i,1); save(); renderSettings(); renderSbCollections();
+}
+
+// ─────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────
+function exportData() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));
+  a.download = `life-oso-${todayStr()}.json`;
+  a.click();
+}
+
+function importData() {
+  const inp = document.createElement('input');
+  inp.type='file'; inp.accept='.json';
+  inp.onchange = e => {
+    const r = new FileReader();
+    r.onload = ev => {
+      try { S = Object.assign(freshState(), JSON.parse(ev.target.result)); save(); location.reload(); }
+      catch { alert('格式錯誤'); }
+    };
+    r.readAsText(e.target.files[0]);
+  };
+  inp.click();
+}
+
+function clearData() {
+  if (!confirm('確定清除所有資料？無法復原。')) return;
+  localStorage.removeItem('life-oso-v1'); location.reload();
+}
+
+// ─────────────────────────────────────────
+// MODAL
+// ─────────────────────────────────────────
+function modal(html) {
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function closeModal(e) {
+  if (e && e.target.id !== 'modal') return;
+  document.getElementById('modal').classList.add('hidden');
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+load();
+renderSbProjects();
+renderSbCollections();
+nav('today');
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+</body>
+</html>

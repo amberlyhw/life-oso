@@ -68,7 +68,7 @@
 
     <!-- TODAY -->
     <div id="page-today" class="page active px-4 py-6 max-w-4xl mx-auto">
-      <div class="mb-6">
+      <div class="mb-4">
         <div class="text-xl font-bold" id="today-date"></div>
         <div class="flex items-center gap-3 mt-1 flex-wrap">
           <span class="text-amber-500 font-medium text-sm" id="today-streak">🔥 0天連續</span>
@@ -77,40 +77,47 @@
         </div>
       </div>
 
-      <div class="mb-8">
-        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">今天有做的事</div>
-        <div id="habits-list" class="space-y-2"></div>
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-      <div class="mb-8">
-        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">番茄鐘</div>
-        <div class="grid grid-cols-4 gap-2">
-          <button onclick="addPomo(5)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
-            <span class="text-xs text-stone-500">≤20分</span>
-            <span class="text-sm font-bold text-amber-500">+5</span>
-          </button>
-          <button onclick="addPomo(15)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
-            <span class="text-xs text-stone-500">21-35分</span>
-            <span class="text-sm font-bold text-amber-500">+15</span>
-          </button>
-          <button onclick="addPomo(40)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
-            <span class="text-xs text-stone-500">36-60分</span>
-            <span class="text-sm font-bold text-amber-500">+40</span>
-          </button>
-          <button onclick="addPomo(80)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
-            <span class="text-xs text-stone-500">&gt;60分</span>
-            <span class="text-sm font-bold text-amber-500">+80</span>
-          </button>
+        <!-- 今天有做的事 -->
+        <div>
+          <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">今天有做的事</div>
+          <div id="habits-list" class="space-y-2"></div>
         </div>
-        <div class="text-xs text-stone-300 mt-2 text-right">累計 <span id="pomo-count">0</span> 個🍅</div>
-      </div>
 
-      <div>
-        <div class="flex items-center justify-between mb-3">
-          <div class="text-xs font-bold tracking-wider text-stone-300">待辦</div>
-          <button onclick="showAddTodo()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+        <!-- 番茄鐘 -->
+        <div>
+          <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">番茄鐘</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="addPomo(5)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+              <span class="text-xs text-stone-500">≤20分</span>
+              <span class="text-sm font-bold text-amber-500">+5</span>
+            </button>
+            <button onclick="addPomo(15)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+              <span class="text-xs text-stone-500">21-35分</span>
+              <span class="text-sm font-bold text-amber-500">+15</span>
+            </button>
+            <button onclick="addPomo(40)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+              <span class="text-xs text-stone-500">36-60分</span>
+              <span class="text-sm font-bold text-amber-500">+40</span>
+            </button>
+            <button onclick="addPomo(80)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+              <span class="text-xs text-stone-500">&gt;60分</span>
+              <span class="text-sm font-bold text-amber-500">+80</span>
+            </button>
+          </div>
+          <div class="text-xs text-stone-300 mt-2 text-right">累計 <span id="pomo-count">0</span> 個🍅</div>
         </div>
-        <div id="todo-list" class="space-y-1"></div>
+
+        <!-- 待辦 -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-bold tracking-wider text-stone-300">待辦</div>
+            <button onclick="showAddTodo()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+          </div>
+          <div id="todo-list" class="space-y-1"></div>
+        </div>
+
       </div>
     </div>
 

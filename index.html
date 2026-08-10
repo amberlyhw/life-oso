@@ -49,8 +49,9 @@
       </div>
       <div id="sb-projects" class="mb-3"></div>
 
-      <div class="px-3 mb-1">
+      <div class="px-3 mb-1 flex items-center justify-between">
         <span class="text-xs font-bold tracking-wider text-stone-300">收藏</span>
+        <button onclick="toggleSbCollections()" id="sb-col-toggle" class="text-stone-300 hover:text-stone-500 text-xs px-1">▼</button>
       </div>
       <div id="sb-collections"></div>
     </nav>
@@ -66,7 +67,7 @@
   <main id="main" class="flex-1 overflow-y-auto pb-16 md:pb-0">
 
     <!-- TODAY -->
-    <div id="page-today" class="page active max-w-xl mx-auto px-4 py-6">
+    <div id="page-today" class="page active px-4 py-6 max-w-4xl mx-auto">
       <div class="mb-6">
         <div class="text-xl font-bold" id="today-date"></div>
         <div class="flex items-center gap-3 mt-1 flex-wrap">
@@ -81,16 +82,40 @@
         <div id="habits-list" class="space-y-2"></div>
       </div>
 
+      <div class="mb-8">
+        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">番茄鐘</div>
+        <div class="grid grid-cols-4 gap-2">
+          <button onclick="addPomo(5)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+            <span class="text-xs text-stone-500">≤20分</span>
+            <span class="text-sm font-bold text-amber-500">+5</span>
+          </button>
+          <button onclick="addPomo(15)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+            <span class="text-xs text-stone-500">21-35分</span>
+            <span class="text-sm font-bold text-amber-500">+15</span>
+          </button>
+          <button onclick="addPomo(40)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+            <span class="text-xs text-stone-500">36-60分</span>
+            <span class="text-sm font-bold text-amber-500">+40</span>
+          </button>
+          <button onclick="addPomo(80)" class="flex flex-col items-center gap-1 py-3 bg-stone-50 hover:bg-amber-50 rounded-xl border border-stone-100 hover:border-amber-200 transition-colors">
+            <span class="text-xs text-stone-500">&gt;60分</span>
+            <span class="text-sm font-bold text-amber-500">+80</span>
+          </button>
+        </div>
+        <div class="text-xs text-stone-300 mt-2 text-right">累計 <span id="pomo-count">0</span> 個🍅</div>
+      </div>
+
       <div>
-        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">今日日記</div>
-        <textarea id="diary-input" rows="6"
-          class="w-full p-3 text-sm text-stone-700 bg-stone-50 rounded-xl border border-stone-100 focus:outline-none focus:border-stone-300 leading-relaxed"
-          placeholder="今天發生了什麼..."></textarea>
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold tracking-wider text-stone-300">待辦</div>
+          <button onclick="showAddTodo()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+        </div>
+        <div id="todo-list" class="space-y-1"></div>
       </div>
     </div>
 
     <!-- COINS -->
-    <div id="page-coins" class="page max-w-xl mx-auto px-4 py-6">
+    <div id="page-coins" class="page px-4 py-6 max-w-4xl mx-auto">
       <h1 class="text-xl font-bold mb-6">💰 映幣</h1>
 
       <div class="bg-amber-50 rounded-2xl p-5 mb-6 flex items-center justify-between">
@@ -110,6 +135,11 @@
         <div id="wish-list" class="space-y-3"></div>
       </div>
 
+      <div class="mb-8">
+        <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">壞習慣罰幣</div>
+        <div id="penalty-list" class="space-y-2"></div>
+      </div>
+
       <div>
         <div class="text-xs font-bold tracking-wider text-stone-300 mb-3">收支紀錄</div>
         <div id="coin-log"></div>
@@ -117,17 +147,17 @@
     </div>
 
     <!-- PROJECTS -->
-    <div id="page-projects" class="page max-w-xl mx-auto px-4 py-6">
+    <div id="page-projects" class="page px-4 py-6 max-w-4xl mx-auto">
       <div id="projects-content"></div>
     </div>
 
     <!-- COLLECTIONS -->
-    <div id="page-collections" class="page max-w-xl mx-auto px-4 py-6">
+    <div id="page-collections" class="page px-4 py-6 max-w-4xl mx-auto">
       <div id="collections-content"></div>
     </div>
 
     <!-- SETTINGS -->
-    <div id="page-settings" class="page max-w-xl mx-auto px-4 py-6">
+    <div id="page-settings" class="page px-4 py-6 max-w-4xl mx-auto">
       <h1 class="text-xl font-bold mb-6">⚙️ 設定</h1>
 
       <div class="mb-8">
@@ -136,6 +166,14 @@
           <button onclick="showAddHabit()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
         </div>
         <div id="settings-habits" class="space-y-1"></div>
+      </div>
+
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold tracking-wider text-stone-300">壞習慣</div>
+          <button onclick="showAddPenalty()" class="text-xs text-stone-400 hover:text-stone-700 font-medium">+ 新增</button>
+        </div>
+        <div id="settings-penalties" class="space-y-1"></div>
       </div>
 
       <div class="mb-8">
@@ -204,6 +242,10 @@ const DEFAULT_COL_CATS = [
   {id:'fitness', name:'健身紀錄',  emoji:'💪'}
 ];
 
+const DEFAULT_PENALTIES = [
+  {id:'phone', name:'滑手機', coins:15}
+];
+
 function freshState() {
   return {
     streak: 0,
@@ -211,11 +253,14 @@ function freshState() {
     coins: 0,
     coinLog: [],
     wishList: [],
-    dayLog: {},      // {YYYY-MM-DD: {habits:{id:{done,detail,earned}}, diary}}
+    dayLog: {},
     projects: [],
-    colData: {},     // {catId: [{name,date,note}]}
+    colData: {},
     habits: JSON.parse(JSON.stringify(DEFAULT_HABITS)),
-    colCats: JSON.parse(JSON.stringify(DEFAULT_COL_CATS))
+    colCats: JSON.parse(JSON.stringify(DEFAULT_COL_CATS)),
+    todos: [],
+    pomodoroCount: 0,
+    penalties: JSON.parse(JSON.stringify(DEFAULT_PENALTIES))
   };
 }
 
@@ -225,7 +270,12 @@ function save() { localStorage.setItem('life-oso-v1', JSON.stringify(S)); }
 function load() {
   try {
     const raw = localStorage.getItem('life-oso-v1');
-    if (raw) S = Object.assign(freshState(), JSON.parse(raw));
+    if (raw) {
+      S = Object.assign(freshState(), JSON.parse(raw));
+      if (!S.todos) S.todos = [];
+      if (!S.pomodoroCount) S.pomodoroCount = 0;
+      if (!S.penalties || !S.penalties.length) S.penalties = JSON.parse(JSON.stringify(DEFAULT_PENALTIES));
+    }
   } catch(e) {}
 }
 
@@ -308,8 +358,9 @@ function renderToday() {
   document.getElementById('sb-streak').textContent = `🔥 ${streak}天`;
   document.getElementById('today-rate').textContent = `本月 ${calcMonthRate()}%`;
   document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
-  document.getElementById('diary-input').value = getDayLog(t).diary || '';
+  document.getElementById('pomo-count').textContent = S.pomodoroCount;
   renderHabits();
+  renderTodos();
 }
 
 function getDetails(hlog) {
@@ -478,14 +529,118 @@ function removeDetail(id, idx) {
   document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
 }
 
-document.getElementById('diary-input').addEventListener('input', function() {
-  getDayLog(todayStr()).diary = this.value;
+
+// ─────────────────────────────────────────
+// POMODORO
+// ─────────────────────────────────────────
+function addPomo(coins) {
+  S.coins += coins;
+  S.pomodoroCount = (S.pomodoroCount || 0) + 1;
+  S.coinLog.unshift({date: todayStr(), amount: coins, note: `🍅 番茄鐘`});
   save();
-});
+  document.getElementById('pomo-count').textContent = S.pomodoroCount;
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
+}
+
+// ─────────────────────────────────────────
+// TODOS
+// ─────────────────────────────────────────
+function renderTodos() {
+  const el = document.getElementById('todo-list');
+  if (!el) return;
+  if (!S.todos.length) {
+    el.innerHTML = '<p class="text-sm text-stone-300 py-1">沒有待辦</p>';
+    return;
+  }
+  el.innerHTML = S.todos.map((t, i) => `
+    <div class="flex items-center gap-3 py-2 border-b border-stone-50 group">
+      <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${i})">
+      <span class="text-sm flex-1 ${t.done ? 'text-stone-400 line-through' : 'text-stone-700'}">${t.name}</span>
+      <span class="text-xs text-amber-400 font-medium shrink-0">+${t.coins}</span>
+      <button onclick="deleteTodo(${i})" class="text-stone-200 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 shrink-0">✕</button>
+    </div>`).join('');
+}
+
+function toggleTodo(i) {
+  const todo = S.todos[i];
+  if (!todo.done) {
+    todo.done = true;
+    S.coins += todo.coins;
+    S.coinLog.unshift({date: todayStr(), amount: todo.coins, note: `✅ ${todo.name}`});
+  } else {
+    todo.done = false;
+    S.coins = Math.max(0, S.coins - todo.coins);
+    const idx = S.coinLog.findIndex(x => x.note === `✅ ${todo.name}` && x.amount === todo.coins);
+    if (idx !== -1) S.coinLog.splice(idx, 1);
+  }
+  save(); renderTodos();
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
+}
+
+function deleteTodo(i) {
+  const todo = S.todos[i];
+  if (todo.done) {
+    S.coins = Math.max(0, S.coins - todo.coins);
+    const idx = S.coinLog.findIndex(x => x.note === `✅ ${todo.name}` && x.amount === todo.coins);
+    if (idx !== -1) S.coinLog.splice(idx, 1);
+  }
+  S.todos.splice(i, 1);
+  save(); renderTodos();
+  document.getElementById('today-coins').textContent = `💰 ${S.coins}映幣`;
+}
+
+function showAddTodo() {
+  modal(`<h3 class="font-bold mb-4">新增待辦</h3>
+    <div class="space-y-3">
+      <input id="tname" type="text" placeholder="任務名稱"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <div class="flex items-center gap-2">
+        <input id="tcoins" type="number" value="10"
+          class="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+        <span class="text-sm text-stone-400">映幣</span>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addTodo()" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addTodo() {
+  const name = document.getElementById('tname').value.trim();
+  const coins = parseInt(document.getElementById('tcoins').value) || 10;
+  if (!name) return;
+  S.todos.push({id: 't' + Date.now(), name, coins, done: false});
+  save(); closeModal(); renderTodos();
+}
 
 // ─────────────────────────────────────────
 // COINS
 // ─────────────────────────────────────────
+function renderPenalties() {
+  const el = document.getElementById('penalty-list');
+  if (!el) return;
+  if (!S.penalties || !S.penalties.length) {
+    el.innerHTML = '<p class="text-sm text-stone-300 py-1">沒有設定壞習慣</p>';
+    return;
+  }
+  el.innerHTML = S.penalties.map((p, i) => `
+    <div class="flex items-center justify-between py-3 px-4 border border-stone-100 rounded-xl">
+      <div>
+        <span class="text-sm font-medium">${p.name}</span>
+        <span class="text-xs text-red-400 ml-2">-${p.coins}幣</span>
+      </div>
+      <button onclick="applyPenalty(${i})" class="px-3 py-1.5 text-sm bg-red-50 text-red-400 rounded-lg hover:bg-red-100 font-medium">又來了</button>
+    </div>`).join('');
+}
+
+function applyPenalty(i) {
+  const p = S.penalties[i];
+  S.coins = Math.max(0, S.coins - p.coins);
+  S.coinLog.unshift({date: todayStr(), amount: -p.coins, note: `😔 ${p.name}`});
+  save(); renderCoins();
+}
+
 function renderCoins() {
   document.getElementById('coins-bal').textContent = S.coins;
   document.getElementById('coins-nt').textContent = S.coins.toLocaleString();
@@ -516,6 +671,8 @@ function renderCoins() {
       </div>`;
     }).join('');
   }
+
+  renderPenalties();
 
   const cl = document.getElementById('coin-log');
   if (!S.coinLog.length) {
@@ -989,7 +1146,8 @@ function renderGeneric(p, el) {
       ${tasks.map((t,i)=>`
         <label class="flex items-center gap-3 py-2.5 border-b border-stone-50 cursor-pointer hover:bg-stone-50 rounded-lg px-1">
           <input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${p.id}',${i})">
-          <span class="text-sm ${t.done?'text-stone-400 line-through':'text-stone-700'}">${t.name}</span>
+          <span class="text-sm flex-1 ${t.done?'text-stone-400 line-through':'text-stone-700'}">${t.name}</span>
+          <span class="text-xs text-amber-400 shrink-0">+${t.coins||10}</span>
         </label>`).join('')}
     </div>
     <button onclick="showAddTask('${p.id}')"
@@ -1000,14 +1158,33 @@ function renderGeneric(p, el) {
 
 function toggleTask(pid, i) {
   const p = S.projects.find(x=>x.id===pid);
-  if (p && p.tasks) { p.tasks[i].done = !p.tasks[i].done; save(); renderProjectsPage(pid); }
+  if (!p || !p.tasks) return;
+  const task = p.tasks[i];
+  const coins = task.coins || 10;
+  task.done = !task.done;
+  if (task.done) {
+    S.coins += coins;
+    S.coinLog.unshift({date: todayStr(), amount: coins, note: `📋 ${p.name}・${task.name}`});
+  } else {
+    S.coins = Math.max(0, S.coins - coins);
+    const idx = S.coinLog.findIndex(x => x.note === `📋 ${p.name}・${task.name}` && x.amount === coins);
+    if (idx !== -1) S.coinLog.splice(idx, 1);
+  }
+  save(); renderProjectsPage(pid);
 }
 
 function showAddTask(pid) {
   modal(`<h3 class="font-bold mb-4">新增任務</h3>
-    <input id="tn" type="text" placeholder="任務名稱"
-      class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none mb-4">
-    <div class="flex gap-2">
+    <div class="space-y-3">
+      <input id="tn" type="text" placeholder="任務名稱"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <div class="flex items-center gap-2">
+        <input id="tc" type="number" value="10"
+          class="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+        <span class="text-sm text-stone-400">映幣</span>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
       <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
       <button onclick="addTask('${pid}')" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
     </div>`);
@@ -1016,9 +1193,10 @@ function showAddTask(pid) {
 function addTask(pid) {
   const p = S.projects.find(x=>x.id===pid);
   const name = document.getElementById('tn').value.trim();
+  const coins = parseInt(document.getElementById('tc').value) || 10;
   if (!name) return;
   if (!p.tasks) p.tasks = [];
-  p.tasks.push({name, done:false});
+  p.tasks.push({name, done:false, coins});
   save(); closeModal(); renderProjectsPage(pid);
 }
 
@@ -1069,6 +1247,13 @@ function renderSbCollections() {
       class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm text-stone-500 flex items-center gap-2 mb-0.5">
       ${c.emoji} ${c.name}
     </button>`).join('');
+}
+
+function toggleSbCollections() {
+  const el = document.getElementById('sb-collections');
+  const btn = document.getElementById('sb-col-toggle');
+  const hidden = el.classList.toggle('hidden');
+  btn.textContent = hidden ? '▶' : '▼';
 }
 
 function renderCollectionsPage(id) {
@@ -1202,6 +1387,15 @@ function renderSettings() {
       </div>
     </div>`).join('');
 
+  document.getElementById('settings-penalties').innerHTML = (S.penalties||[]).map((p,i)=>`
+    <div class="flex items-center justify-between py-2.5 border-b border-stone-50">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium">${p.name}</span>
+        <span class="text-xs text-red-400">-${p.coins}幣</span>
+      </div>
+      <button onclick="deletePenalty(${i})" class="text-xs text-stone-300 hover:text-red-400">刪除</button>
+    </div>`).join('');
+
   document.getElementById('settings-cols').innerHTML = S.colCats.map((c,i)=>`
     <div class="flex items-center justify-between py-2.5 border-b border-stone-50">
       <div class="flex items-center gap-2">
@@ -1210,6 +1404,38 @@ function renderSettings() {
       </div>
       <button onclick="deleteColCat(${i})" class="text-xs text-stone-300 hover:text-red-400">刪除</button>
     </div>`).join('');
+}
+
+function showAddPenalty() {
+  modal(`<h3 class="font-bold mb-4">新增壞習慣</h3>
+    <div class="space-y-3">
+      <input id="pname" type="text" placeholder="壞習慣名稱"
+        class="w-full px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+      <div class="flex items-center gap-2">
+        <input id="pcoins" type="number" value="15"
+          class="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg focus:outline-none">
+        <span class="text-sm text-stone-400">幣</span>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeModal()" class="flex-1 py-2 text-sm border border-stone-200 rounded-lg">取消</button>
+      <button onclick="addPenalty()" class="flex-1 py-2 text-sm bg-stone-800 text-white rounded-lg font-medium">新增</button>
+    </div>`);
+}
+
+function addPenalty() {
+  const name = document.getElementById('pname').value.trim();
+  const coins = parseInt(document.getElementById('pcoins').value) || 15;
+  if (!name) return;
+  if (!S.penalties) S.penalties = [];
+  S.penalties.push({id: 'pen' + Date.now(), name, coins});
+  save(); closeModal(); renderSettings();
+}
+
+function deletePenalty(i) {
+  if (!confirm(`刪除「${S.penalties[i].name}」？`)) return;
+  S.penalties.splice(i, 1);
+  save(); renderSettings();
 }
 
 function showAddHabit() {
@@ -1470,7 +1696,7 @@ initGuokaoProject();
 initOnlineCourses();
 renderSbProjects();
 renderSbCollections();
-nav('today');
+nav('coins');
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');

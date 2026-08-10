@@ -33,6 +33,7 @@
     <div class="px-4 pt-6 pb-3">
       <div class="text-xs font-black tracking-widest text-stone-300 mb-2">LIFE OSO</div>
       <div class="text-sm text-amber-500 font-medium" id="sb-streak">🔥 0天</div>
+      <button id="install-btn" onclick="installApp()" class="hidden mt-2 w-full text-xs px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 font-medium">⬇️ 安裝 App</button>
     </div>
 
     <nav class="flex-1 overflow-y-auto px-2 pb-2">
@@ -127,7 +128,10 @@
 
     <!-- COINS -->
     <div id="page-coins" class="page px-4 py-6 max-w-4xl mx-auto">
-      <h1 class="text-xl font-bold mb-6">💰 映幣</h1>
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold">💰 映幣</h1>
+        <button id="install-btn-mobile" onclick="installApp()" class="hidden text-xs px-3 py-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 font-medium">⬇️ 安裝 App</button>
+      </div>
 
       <div class="bg-amber-50 rounded-2xl p-5 mb-6 flex items-center justify-between">
         <div>
@@ -1711,6 +1715,27 @@ nav('coins');
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
+}
+
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  document.getElementById('install-btn').classList.remove('hidden');
+  document.getElementById('install-btn-mobile').classList.remove('hidden');
+});
+
+function installApp() {
+  if (_installPrompt) {
+    _installPrompt.prompt();
+    _installPrompt.userChoice.then(() => {
+      _installPrompt = null;
+      document.getElementById('install-btn').classList.add('hidden');
+      document.getElementById('install-btn-mobile').classList.add('hidden');
+    });
+  } else {
+    alert('iOS 請用 Safari → 分享 → 加入主畫面');
+  }
 }
 </script>
 </body>
